@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Manajemen Stok Bahan MBG (Batch & QR Ready)</title>
+    <title>Sistem Manajemen Stok Bahan MBG</title>
     <link rel="stylesheet" href="style.css">
     
-    <!-- Library untuk Export Excel Profesional -->
+    <!-- Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    
-    <!-- Library untuk Generate & Scan QR Code -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
@@ -21,28 +19,27 @@
 
         <!-- Area Manajemen Data & Laporan -->
         <div class="card">
-            <h2>Manajemen Data & Laporan</h2>
-            <div class="action-buttons" style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <button class="btn-submit" onclick="exportExcel()" style="flex: 1; font-size: 0.9rem; background-color: #107C41; color: white; border: 1px solid #107C41;">📊 Laporan (Excel)</button>
-                <button class="btn-submit" onclick="exportJSON()" style="flex: 1; font-size: 0.9rem;">💾 Backup (JSON)</button>
-                <button class="btn-submit" onclick="document.getElementById('importFile').click()" style="flex: 1; font-size: 0.9rem;">📂 Restore (JSON)</button>
-                <!-- Tombol Kamera Scanner -->
-                <button class="btn-submit" onclick="openScannerModal()" style="flex: 1; font-size: 0.9rem; background-color: var(--primary-color); color: white;">📷 Scan QR Code</button>
-                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importJSON(event)">
+            <h2>Sistem & Laporan</h2>
+            <div class="action-buttons-group">
+                <button class="btn-neumorphic text-green" onclick="exportExcel()">投 Laporan (Excel)</button>
+                <button class="btn-neumorphic text-primary" onclick="exportJSON()">沈 Backup (JSON)</button>
+                <button class="btn-neumorphic text-warning" onclick="document.getElementById('importFile').click()">唐 Restore (JSON)</button>
+                <button class="btn-neumorphic text-primary bold" onclick="openScannerModal()">胴 Scan QR Code</button>
+                <input type="file" id="importFile" accept=".json" class="hidden" onchange="importJSON(event)">
             </div>
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 1rem;">
+            <p class="text-helper">
                 * Gunakan <strong>Backup (JSON)</strong> secara berkala agar data tidak hilang jika cache browser terhapus.
             </p>
         </div>
 
         <!-- Area Form Input -->
         <div class="card">
-            <h2>Input Bahan Baru / Tambah Batch</h2>
+            <h2>Input Bahan / Tambah Batch</h2>
             <form id="formInputStok">
                 <div class="form-grid">
                     <div class="form-group full-width">
                         <label for="namaBahan">Nama Bahan</label>
-                        <input type="text" id="namaBahan" placeholder="Contoh: Tepung Terigu (Otomatis menggabung jika nama sama)" required>
+                        <input type="text" id="namaBahan" placeholder="Contoh: Tepung Terigu" required>
                     </div>
                     <div class="form-group">
                         <label for="kategori">Kategori Bahan</label>
@@ -71,7 +68,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="minStock">Stok Minimum (Alert)</label>
+                        <label for="minStock">Batas Minimum Stok</label>
                         <input type="number" step="any" id="minStock" placeholder="0" min="0" required>
                     </div>
                     <div class="form-group">
@@ -81,15 +78,15 @@
                     <div class="form-group full-width">
                         <label for="lokasiGudang">Lokasi Gudang</label>
                         <select id="lokasiGudang" required>
-                            <option value="" disabled selected>Pilih lokasi gudang...</option>
+                            <option value="" disabled selected>Pilih lokasi...</option>
                             <option value="besar">Gudang Besar</option>
                             <option value="kering">Gudang Kering</option>
                             <option value="basah">Gudang Basah</option>
                             <option value="offices">Gudang Offices</option>
                         </select>
                     </div>
-                    <div class="form-group full-width" style="margin-top: 1rem;">
-                        <button type="submit" class="btn-submit">Simpan Stok</button>
+                    <div class="form-group full-width form-submit-area">
+                        <button type="submit" class="btn-neumorphic bold text-primary btn-large">Simpan Stok</button>
                     </div>
                 </div>
             </form>
@@ -97,25 +94,25 @@
 
         <!-- Area Tampilan Data & Tab -->
         <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 1.5rem;">
-                <h2 style="margin-bottom: 0;">Daftar Stok Bahan</h2>
-                <button class="btn-action" style="color: var(--primary-color);" onclick="openHistoryModal()">Lihat Riwayat Transaksi</button>
+            <div class="section-header">
+                <h2>Daftar Stok Bahan</h2>
+                <button class="btn-neumorphic-small text-primary" onclick="openHistoryModal()">Lihat Riwayat</button>
             </div>
 
             <div class="dashboard-grid">
                 <div class="dash-card active" data-alert="semua">
-                    <h4>Total Jenis Bahan</h4><p id="statTotal">0</p>
+                    <h4>Total Jenis</h4><p id="statTotal">0</p>
                 </div>
                 <div class="dash-card warning-card" data-alert="min">
                     <h4>Stok Menipis</h4><p id="statMin">0</p>
                 </div>
                 <div class="dash-card danger-card" data-alert="exp">
-                    <h4>Exp. / Hampir Exp.</h4><p id="statExp">0</p>
+                    <h4>Exp / Hampir Exp</h4><p id="statExp">0</p>
                 </div>
             </div>
             
-            <div class="form-group full-width" style="margin-bottom: 1.5rem;">
-                <input type="text" id="searchInput" placeholder="Cari nama bahan di sini..." style="border-radius: 20px;">
+            <div class="form-group full-width search-area">
+                <input type="text" id="searchInput" placeholder="Cari nama bahan di sini...">
             </div>
 
             <div class="tabs" id="tabContainer">
@@ -127,53 +124,164 @@
             </div>
 
             <div id="stockContainer" class="stock-container">
-                <p>Data stok akan muncul di sini...</p>
+                <p class="text-muted">Data stok akan muncul di sini...</p>
             </div>
         </div>
     </div>
 
-    <!-- SEMUA MODAL BAWAAN ANDA DI SINI -->
-    <div class="modal-overlay" id="editModal"><div class="modal-card card"><h2>Edit Info Utama Bahan</h2><form id="formEditStok"><input type="hidden" id="editId"><div class="form-grid"><div class="form-group full-width"><label>Nama Bahan</label><input type="text" id="editNama" required></div><div class="form-group"><label>Kategori</label><select id="editKategori" required><option value="Sembako/Karbohidrat">Sembako/Karbohidrat</option><option value="Daging/Protein">Daging/Protein</option><option value="Sayuran & Buah">Sayuran & Buah</option><option value="Bumbu & Rempah">Bumbu & Rempah</option><option value="Susu & Olahan">Susu & Olahan</option></select></div><div class="form-group"><label>Satuan</label><select id="editSatuan" required><option value="kg">Kilogram (kg)</option><option value="gram">Gram (g)</option><option value="liter">Liter (L)</option><option value="pcs">Pcs</option><option value="pack">Pack</option></select></div><div class="form-group"><label>Stok Min.</label><input type="number" step="any" id="editMinStock" required></div><div class="form-group full-width"><label>Lokasi Gudang</label><select id="editLokasiGudang" required><option value="besar">Gudang Besar</option><option value="kering">Gudang Kering</option><option value="basah">Gudang Basah</option><option value="offices">Gudang Offices</option></select></div><div class="form-group full-width action-buttons" style="flex-direction: row; margin-top: 1rem;"><button type="submit" class="btn-submit" style="flex: 1;">Simpan</button><button type="button" class="btn-submit" onclick="closeEditModal()" style="flex: 1; color: #718096;">Batal</button></div></div></form></div></div>
+    <!-- MODAL EDIT -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-card card">
+            <h2>Edit Info Utama</h2>
+            <form id="formEditStok">
+                <input type="hidden" id="editId">
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label>Nama Bahan</label><input type="text" id="editNama" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Kategori</label>
+                        <select id="editKategori" required>
+                            <option value="Sembako/Karbohidrat">Sembako/Karbohidrat</option>
+                            <option value="Daging/Protein">Daging/Protein</option>
+                            <option value="Sayuran & Buah">Sayuran & Buah</option>
+                            <option value="Bumbu & Rempah">Bumbu & Rempah</option>
+                            <option value="Susu & Olahan">Susu & Olahan</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Satuan</label>
+                        <select id="editSatuan" required>
+                            <option value="kg">Kilogram (kg)</option>
+                            <option value="gram">Gram (g)</option>
+                            <option value="liter">Liter (L)</option>
+                            <option value="pcs">Pcs</option>
+                            <option value="pack">Pack</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Stok Min.</label><input type="number" step="any" id="editMinStock" required></div>
+                    <div class="form-group full-width">
+                        <label>Lokasi Gudang</label>
+                        <select id="editLokasiGudang" required>
+                            <option value="besar">Gudang Besar</option><option value="kering">Gudang Kering</option><option value="basah">Gudang Basah</option><option value="offices">Gudang Offices</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width modal-actions">
+                        <button type="submit" class="btn-neumorphic text-primary bold">Simpan</button>
+                        <button type="button" class="btn-neumorphic" onclick="closeEditModal()">Batal</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    <div class="modal-overlay" id="addBatchModal"><div class="modal-card card"><h2>Tambah Stok (Batch Baru)</h2><form id="formAddBatch"><input type="hidden" id="addBatchId"><div class="form-grid"><div class="form-group full-width"><label>Kuantitas Masuk</label><input type="number" step="any" id="addBatchQty" min="0.01" required></div><div class="form-group full-width"><label>Tanggal Kadaluwarsa</label><input type="date" id="addBatchExp" required></div><div class="form-group full-width action-buttons" style="flex-direction: row; margin-top: 1rem;"><button type="submit" class="btn-submit" style="flex: 1;">Simpan</button><button type="button" class="btn-submit" onclick="closeAddBatchModal()" style="flex: 1; color: #718096;">Batal</button></div></div></form></div></div>
+    <!-- MODAL ADD BATCH -->
+    <div class="modal-overlay" id="addBatchModal">
+        <div class="modal-card card">
+            <h2>Tambah Stok (Batch Baru)</h2>
+            <form id="formAddBatch">
+                <input type="hidden" id="addBatchId">
+                <div class="form-grid">
+                    <div class="form-group full-width"><label>Kuantitas Masuk</label><input type="number" step="any" id="addBatchQty" min="0.01" required></div>
+                    <div class="form-group full-width"><label>Tanggal Kadaluwarsa</label><input type="date" id="addBatchExp" required></div>
+                    <div class="form-group full-width modal-actions">
+                        <button type="submit" class="btn-neumorphic text-primary bold">Simpan</button>
+                        <button type="button" class="btn-neumorphic" onclick="closeAddBatchModal()">Batal</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    <div class="modal-overlay" id="issueModal"><div class="modal-card card"><h2>Keluarkan Stok</h2><form id="formIssueStock"><input type="hidden" id="issueId"><input type="hidden" id="issueBatchId"><div class="form-grid"><div class="form-group full-width"><label>Jumlah Keluar</label><input type="number" step="any" id="issueQty" min="0.01" required></div><div class="form-group full-width"><label>Alasan</label><select id="issueReason" required><option value="Dimasak">Dimasak (Pemakaian Normal)</option><option value="Kadaluwarsa">Kadaluwarsa (Dibuang)</option><option value="Rusak/Busuk">Rusak / Busuk (Waste)</option><option value="Selisih Hitung">Selisih Hitung (Opname)</option></select></div><div class="form-group full-width"><label>Keterangan</label><input type="text" id="issueNotes" placeholder="Contoh: Jatuh, bau, dsb..."></div><div class="form-group full-width action-buttons" style="flex-direction: row; margin-top: 1rem;"><button type="submit" class="btn-submit" style="flex: 1; color: var(--danger-color);">Keluarkan Stok</button><button type="button" class="btn-submit" onclick="closeIssueModal()" style="flex: 1; color: #718096;">Batal</button></div></div></form></div></div>
+    <!-- MODAL ISSUE (KELUAR) -->
+    <div class="modal-overlay" id="issueModal">
+        <div class="modal-card card">
+            <h2>Keluarkan Stok</h2>
+            <form id="formIssueStock">
+                <input type="hidden" id="issueId"><input type="hidden" id="issueBatchId">
+                <div class="form-grid">
+                    <div class="form-group full-width"><label>Jumlah Keluar</label><input type="number" step="any" id="issueQty" min="0.01" required></div>
+                    <div class="form-group full-width">
+                        <label>Alasan</label>
+                        <select id="issueReason" required>
+                            <option value="Dimasak">Dimasak (Pemakaian Normal)</option>
+                            <option value="Kadaluwarsa">Kadaluwarsa (Dibuang)</option>
+                            <option value="Rusak/Busuk">Rusak / Busuk (Waste)</option>
+                            <option value="Selisih Hitung">Selisih Hitung (Opname)</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width"><label>Keterangan</label><input type="text" id="issueNotes" placeholder="Contoh: Jatuh, bau, dsb..."></div>
+                    <div class="form-group full-width modal-actions">
+                        <button type="submit" class="btn-neumorphic text-danger bold">Keluarkan Stok</button>
+                        <button type="button" class="btn-neumorphic" onclick="closeIssueModal()">Batal</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    <div class="modal-overlay" id="historyModal"><div class="modal-card card"><h2>Riwayat Transaksi</h2><div id="historyContainer" class="history-list"></div><div class="form-group full-width action-buttons" style="margin-top: 1.5rem;"><button type="button" class="btn-submit" onclick="closeHistoryModal()" style="width: 100%; color: #718096;">Tutup</button></div></div></div>
+    <!-- MODAL HISTORY -->
+    <div class="modal-overlay" id="historyModal">
+        <div class="modal-card card">
+            <h2>Riwayat Transaksi</h2>
+            <div id="historyContainer" class="history-list"></div>
+            <div class="form-group full-width modal-actions">
+                <button type="button" class="btn-neumorphic full-width" onclick="closeHistoryModal()">Tutup</button>
+            </div>
+        </div>
+    </div>
 
-    <div class="modal-overlay" id="opnameModal"><div class="modal-card card"><h2>Stock Opname</h2><form id="formOpname"><input type="hidden" id="opnameId"><div class="form-grid"><div class="form-group full-width"><label>Sisa Stok di Sistem saat ini</label><input type="text" id="opnameSystemQty" disabled style="background: rgba(0,0,0,0.05);"></div><div class="form-group full-width"><label>Jumlah Riil di Lapangan (Fisik)</label><input type="number" step="any" id="opnameActualQty" min="0" required></div><div class="form-group full-width" id="opnameExpDateContainer" style="display: none;"><label>Tanggal Kadaluwarsa</label><input type="date" id="opnameExpDate"></div><div class="form-group full-width"><label>Keterangan</label><input type="text" id="opnameNotes"></div><div class="form-group full-width action-buttons" style="flex-direction: row; margin-top: 1rem;"><button type="submit" class="btn-submit" style="flex: 1; color: var(--warning-color);">Proses Opname</button><button type="button" class="btn-submit" onclick="closeOpnameModal()" style="flex: 1; color: #718096;">Batal</button></div></div></form></div></div>
+    <!-- MODAL OPNAME -->
+    <div class="modal-overlay" id="opnameModal">
+        <div class="modal-card card">
+            <h2>Stock Opname</h2>
+            <form id="formOpname">
+                <input type="hidden" id="opnameId">
+                <div class="form-grid">
+                    <div class="form-group full-width"><label>Sisa Stok di Sistem saat ini</label><input type="text" id="opnameSystemQty" disabled class="disabled-input"></div>
+                    <div class="form-group full-width"><label>Jumlah Riil di Lapangan (Fisik)</label><input type="number" step="any" id="opnameActualQty" min="0" required></div>
+                    <div class="form-group full-width" id="opnameExpDateContainer" style="display: none;"><label>Tanggal Kadaluwarsa</label><input type="date" id="opnameExpDate"></div>
+                    <div class="form-group full-width"><label>Keterangan</label><input type="text" id="opnameNotes"></div>
+                    <div class="form-group full-width modal-actions">
+                        <button type="submit" class="btn-neumorphic text-warning bold">Proses Opname</button>
+                        <button type="button" class="btn-neumorphic" onclick="closeOpnameModal()">Batal</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    <!-- MODAL BARU: TAMPILKAN QR CODE -->
+    <!-- MODAL QR -->
     <div class="modal-overlay" id="qrModal">
-        <div class="modal-card card" style="text-align: center; max-width: 350px;">
+        <div class="modal-card card text-center modal-sm">
             <h2 id="qrTitle">QR Code Batch</h2>
-            <p style="font-size: 0.8rem; margin-bottom: 1rem;">Siapkan stiker di printer, lalu tekan tombol cetak.</p>
-            <div id="qrcode-container" style="display: flex; justify-content: center; background: white; padding: 1rem; border-radius: 10px; margin-bottom: 1rem;"></div>
-            <div style="display: flex; gap: 1rem;">
-                <button type="button" class="btn-submit" onclick="printQRLabel()" style="flex: 2; background-color: var(--primary-color); color: white; border: none;">🖨️ Cetak Stiker</button>
-                <button type="button" class="btn-submit" onclick="closeQRModal()" style="flex: 1; color: #718096;">Tutup</button>
+            <p class="text-helper">Siapkan stiker di printer, lalu tekan tombol cetak.</p>
+            <div id="qrcode-container" class="qr-box-wrapper"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn-neumorphic text-primary bold flex-2" onclick="printQRLabel()">蜜ｸ Cetak Stiker</button>
+                <button type="button" class="btn-neumorphic flex-1" onclick="closeQRModal()">Tutup</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL BARU: KAMERA SCANNER -->
+    <!-- MODAL SCANNER -->
     <div class="modal-overlay" id="scannerModal">
-        <div class="modal-card card" style="max-width: 400px; text-align: center;">
+        <div class="modal-card card text-center modal-sm">
             <h2>Scan QR Barang</h2>
-            <div id="reader" style="width: 100%; min-height: 250px; background: #000; border-radius: 10px; overflow: hidden; margin-bottom: 1rem;"></div>
-            <button type="button" class="btn-submit" onclick="closeScannerModal()" style="width: 100%; color: #718096;">Tutup Scanner</button>
+            <div id="reader" class="scanner-wrapper"></div>
+            <button type="button" class="btn-neumorphic full-width" onclick="closeScannerModal()">Tutup Scanner</button>
         </div>
     </div>
 
-    <!-- MODAL BARU: AKSI SETELAH SCAN -->
+    <!-- MODAL SCAN ACTION -->
     <div class="modal-overlay" id="scanActionModal">
         <div class="modal-card card">
             <h2>Aksi Cepat Barcode</h2>
-            <p id="scanItemDesc" style="margin-bottom: 1rem; font-weight: bold;"></p>
+            <p id="scanItemDesc" class="scan-desc"></p>
             <div class="form-grid">
-                <button type="button" class="btn-submit" onclick="triggerScanAdd()" style="color: var(--primary-color);">+ Tambah Stok (Batch Sama)</button>
-                <button type="button" class="btn-submit" onclick="triggerScanIssue()" style="color: var(--danger-color);">- Keluarkan Stok</button>
-                <button type="button" class="btn-submit full-width" onclick="closeScanActionModal()" style="color: #718096; margin-top: 1rem;">Batal</button>
+                <button type="button" class="btn-neumorphic text-primary bold" onclick="triggerScanAdd()">+ Tambah Stok (Batch Sama)</button>
+                <button type="button" class="btn-neumorphic text-danger bold" onclick="triggerScanIssue()">- Keluarkan Stok</button>
+                <button type="button" class="btn-neumorphic full-width mt-1" onclick="closeScanActionModal()">Batal</button>
             </div>
         </div>
     </div>
