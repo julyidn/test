@@ -165,7 +165,7 @@ function renderStockData() {
     stockContainer.appendChild(stockListElement);
 }
 
-// 5. FITUR BARU: GENERATE & CETAK QR CODE
+// 5. FITUR: GENERATE & CETAK QR CODE
 window.showQRCode = function(idBahan, idBatch, namaBahan, expDate) {
     const qrContainer = document.getElementById('qrcode-container');
     qrContainer.innerHTML = ""; 
@@ -253,8 +253,7 @@ window.printQRLabel = function() {
     printWindow.document.close();
 }
 
-
-// 6. FITUR BARU: SCANNER QR CODE (KAMERA)
+// 6. FITUR: SCANNER QR CODE (KAMERA)
 window.openScannerModal = function() {
     scannerModal.classList.add('show');
     html5QrcodeScanner = new Html5Qrcode("reader");
@@ -308,7 +307,7 @@ window.triggerScanIssue = function() {
     openIssueModal(tempScanData.idBahan, tempScanData.idBatch); 
 }
 
-// 7. Modifikasi Form Keluarkan Stok (Mendukung Scan)
+// 7. Modifikasi Form Keluarkan Stok (Mendukung Scan + Konfirmasi Multi-Batch)
 window.openIssueModal = function(id, specificBatchId = null) {
     const item = daftarStok.find(i => i.id === id);
     if (!item) return;
@@ -337,26 +336,51 @@ formIssueStock.addEventListener('submit', function(e) {
     let totalQty = item.batches.reduce((sum, b) => sum + b.kuantitas, 0);
     if (totalQty < amount) return alert("Stok tidak mencukupi untuk dikeluarkan sejumlah tersebut!");
 
+    // ==========================================
+    // OPTIMISASI: KONFIRMASI MULTI-BATCH (FIFO)
+    // ==========================================
+    let targetBatch = specificBatchId ? item.batches.find(b => b.idBatch == specificBatchId) : null;
+    
+    // Jika scan QR digunakan dan kuantitas batch yang discan TIDAK cukup
+    if (targetBatch && targetBatch.kuantitas < amount) {
+        const sisaDibutuhkan = amount - targetBatch.kuantitas;
+        const pesanKonfirmasi = 
+            `⚠️ PERINGATAN BATCH ⚠️\n\n` +
+            `Stok pada batch yang Anda scan hanya tersisa ${targetBatch.kuantitas} ${item.satuan}.\n` +
+            `Kekurangan sebanyak ${sisaDibutuhkan} ${item.satuan} akan DITARIK SECARA OTOMATIS dari batch lain (metode FIFO).\n\n` +
+            `Pastikan Anda benar-benar mengambil fisik barang dari batch lain di gudang.\n` +
+            `Apakah Anda yakin ingin melanjutkan?`;
+            
+        // Hentikan proses jika user membatalkan
+        if (!confirm(pesanKonfirmasi)) {
+            return; 
+        }
+    }
+    // ==========================================
+
     let sisaDipotong = amount;
 
-    if(specificBatchId) {
-        let targetBatch = item.batches.find(b => b.idBatch == specificBatchId);
-        if(targetBatch) {
-            if(targetBatch.kuantitas >= sisaDipotong) {
-                targetBatch.kuantitas -= sisaDipotong;
-                sisaDipotong = 0;
-            } else {
-                sisaDipotong -= targetBatch.kuantitas;
-                targetBatch.kuantitas = 0;
-            }
+    // Potong dari spesifik batch hasil scan terlebih dahulu (jika ada)
+    if(targetBatch) {
+        if(targetBatch.kuantitas >= sisaDipotong) {
+            targetBatch.kuantitas -= sisaDipotong;
+            sisaDipotong = 0;
+        } else {
+            sisaDipotong -= targetBatch.kuantitas;
+            targetBatch.kuantitas = 0;
         }
     }
 
+    // Jika masih ada sisa pemotongan (baik karena multi-batch di atas, atau manual FIFO tanpa scan)
     if(sisaDipotong > 0) {
         item.batches.sort((a, b) => new Date(a.expDate) - new Date(b.expDate));
         for (let i = 0; i < item.batches.length; i++) {
             if (sisaDipotong <= 0) break;
             let batch = item.batches[i];
+            
+            // Skip jika kita memotong batch spesifik tadi (karena kuantitasnya pasti sudah 0)
+            if (batch.kuantitas <= 0) continue;
+
             if (batch.kuantitas >= sisaDipotong) {
                 batch.kuantitas -= sisaDipotong;
                 sisaDipotong = 0;
@@ -367,7 +391,9 @@ formIssueStock.addEventListener('submit', function(e) {
         }
     }
 
+    // Bersihkan batch yang kosong
     item.batches = item.batches.filter(b => b.kuantitas > 0);
+    
     let newTotal = item.batches.reduce((sum, b) => sum + b.kuantitas, 0);
     catatRiwayat(item.namaBahan, 'Keluar', amount, newTotal, item.satuan, alasan, notes);
 
@@ -486,7 +512,7 @@ searchInput.addEventListener('input', renderStockData);
 tabButtons.forEach(button => { button.addEventListener('click', () => { tabButtons.forEach(btn => btn.classList.remove('active')); button.classList.add('active'); currentFilter = button.getAttribute('data-filter'); renderStockData(); }); });
 dashCards.forEach(card => { card.addEventListener('click', () => { dashCards.forEach(c => c.classList.remove('active')); card.classList.add('active'); currentAlertFilter = card.getAttribute('data-alert'); renderStockData(); }); });
 
-// 9. LOGIKA EXPORT & IMPORT DATA (FIXED)
+// 9. LOGIKA EXPORT & IMPORT DATA 
 window.exportExcel = async function() {
     if (typeof ExcelJS === 'undefined') {
         alert("Library ExcelJS belum dimuat. Pastikan Anda memiliki koneksi internet aktif.");
@@ -582,16 +608,12 @@ window.importJSON = function(event) {
     reader.onload = function(e) {
         try {
             const importedData = JSON.parse(e.target.result);
-            // Validasi sederhana struktur JSON
             if (importedData.daftarStok && importedData.riwayatStok) {
                 daftarStok = importedData.daftarStok;
                 riwayatStok = importedData.riwayatStok;
-                
-                // Simpan ke storage dan perbarui tampilan
                 saveDataToStorage();
                 saveHistoryToStorage();
                 renderStockData();
-                
                 alert('Data berhasil di-restore!');
             } else {
                 alert('Format JSON tidak sesuai dengan sistem MBG!');
@@ -602,8 +624,6 @@ window.importJSON = function(event) {
         }
     };
     reader.readAsText(file);
-    
-    // Kosongkan input agar bisa mengimport file yang sama lagi jika perlu
     event.target.value = '';
 };
 
