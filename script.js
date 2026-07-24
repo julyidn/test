@@ -27,7 +27,7 @@ const qrModal = document.getElementById('qrModal');
 const scannerModal = document.getElementById('scannerModal');
 const scanActionModal = document.getElementById('scanActionModal');
 let html5QrcodeScanner = null;
-let tempScanData = null; // Menyimpan data barang sementara setelah scan
+let tempScanData = null; 
 
 // Key untuk LocalStorage & Variabel
 const STORAGE_KEY = 'mbg_stok_bahan_v2'; 
@@ -123,7 +123,6 @@ function renderStockData() {
         }
         let stockBadge = totalQty <= (item.minStock || 0) ? '<span class="badge danger">Stok Menipis</span>' : '';
 
-        // TAMPILAN BATCH BESERTA TOMBOL QR CODE
         let batchesHtml = item.batches.sort((a,b) => new Date(a.expDate) - new Date(b.expDate)).map(b => `
             <div class="batch-row">
                 <div class="batch-row-header" style="flex: 1;">
@@ -166,13 +165,16 @@ function renderStockData() {
     stockContainer.appendChild(stockListElement);
 }
 
-// 5. FITUR BARU: GENERATE & TAMPILKAN QR CODE
+// 5. FITUR BARU: GENERATE & CETAK QR CODE
 window.showQRCode = function(idBahan, idBatch, namaBahan, expDate) {
     const qrContainer = document.getElementById('qrcode-container');
-    qrContainer.innerHTML = ""; // Bersihkan QR sebelumnya
+    qrContainer.innerHTML = ""; 
     
-    // Format String QR: MBG|IdBahan|IdBatch
     const qrText = `MBG|${idBahan}|${idBatch}`;
+    
+    qrContainer.setAttribute('data-nama', namaBahan);
+    qrContainer.setAttribute('data-exp', expDate);
+    qrContainer.setAttribute('data-batch', idBatch);
     
     document.getElementById('qrTitle').innerText = `${namaBahan} (Exp: ${expDate})`;
     
@@ -188,6 +190,69 @@ window.showQRCode = function(idBahan, idBatch, namaBahan, expDate) {
     qrModal.classList.add('show');
 }
 window.closeQRModal = function() { qrModal.classList.remove('show'); }
+
+window.printQRLabel = function() {
+    const qrContainer = document.getElementById('qrcode-container');
+    const canvas = qrContainer.querySelector('canvas');
+    const img = qrContainer.querySelector('img');
+    let qrSrc = '';
+    
+    if (canvas) {
+        qrSrc = canvas.toDataURL("image/png");
+    } else if (img && img.src) {
+        qrSrc = img.src;
+    } else {
+        alert("Sistem masih merender QR Code, tunggu sedetik dan coba lagi.");
+        return;
+    }
+
+    const namaBahan = qrContainer.getAttribute('data-nama') || "Bahan MBG";
+    const expDate = qrContainer.getAttribute('data-exp') || "-";
+    const batchId = qrContainer.getAttribute('data-batch') || "-";
+
+    const printWindow = window.open('', '_blank', 'width=400,height=400');
+    
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Cetak QR Stiker</title>
+            <style>
+                @page { margin: 0; size: 50mm 30mm; }
+                body { margin: 0; padding: 0; width: 50mm; height: 30mm; background: #fff; display: flex; align-items: center; font-family: Arial, sans-serif; color: #000; box-sizing: border-box; }
+                .label-wrapper { width: 100%; height: 100%; padding: 2mm; display: flex; align-items: center; box-sizing: border-box; }
+                .qr-box { width: 25mm; height: 25mm; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
+                .qr-box img { width: 100%; height: 100%; object-fit: contain; }
+                .info-box { flex: 1; padding-left: 2mm; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+                .nama-bahan { font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 3px; line-height: 1.1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+                .detail-teks { font-size: 9px; margin: 1px 0; line-height: 1.1; }
+            </style>
+        </head>
+        <body>
+            <div class="label-wrapper">
+                <div class="qr-box">
+                    <img src="${qrSrc}" alt="QR Code" />
+                </div>
+                <div class="info-box">
+                    <div class="nama-bahan">${namaBahan}</div>
+                    <div class="detail-teks"><b>Exp:</b><br>${expDate}</div>
+                    <div class="detail-teks"><b>Batch:</b> ${batchId}</div>
+                </div>
+            </div>
+            <script>
+                window.onload = function() {
+                    setTimeout(() => {
+                        window.print();
+                        window.close();
+                    }, 300);
+                };
+            </script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+}
+
 
 // 6. FITUR BARU: SCANNER QR CODE (KAMERA)
 window.openScannerModal = function() {
@@ -210,10 +275,9 @@ window.closeScannerModal = function() {
 }
 
 function onScanSuccess(decodedText, decodedResult) {
-    // Format yg diharap: MBG|IdBahan|IdBatch
     const parts = decodedText.split('|');
     if(parts.length === 3 && parts[0] === 'MBG') {
-        closeScannerModal(); // Tutup kamera
+        closeScannerModal(); 
         
         const idBahan = parseInt(parts[1]);
         const idBatch = parseInt(parts[2]);
@@ -224,7 +288,6 @@ function onScanSuccess(decodedText, decodedResult) {
         const batch = item.batches.find(b => b.idBatch === idBatch);
         if(!batch) return alert("Batch tidak valid atau sudah habis.");
         
-        // Simpan state untuk diproses
         tempScanData = { idBahan, idBatch, item, batch };
         
         document.getElementById('scanItemDesc').innerText = `${item.namaBahan} (Sisa Batch Ini: ${batch.kuantitas} ${item.satuan})`;
@@ -235,16 +298,14 @@ function onScanSuccess(decodedText, decodedResult) {
 }
 window.closeScanActionModal = function() { scanActionModal.classList.remove('show'); }
 
-// Aksi Lanjutan Setelah Scan (Tambah atau Kurang)
 window.triggerScanAdd = function() {
     closeScanActionModal();
     openAddBatchModal(tempScanData.idBahan);
-    // Otomatis isi tanggal expired dari batch yg di-scan
     document.getElementById('addBatchExp').value = tempScanData.batch.expDate;
 }
 window.triggerScanIssue = function() {
     closeScanActionModal();
-    openIssueModal(tempScanData.idBahan, tempScanData.idBatch); // Oper parameter Batch spesifik
+    openIssueModal(tempScanData.idBahan, tempScanData.idBatch); 
 }
 
 // 7. Modifikasi Form Keluarkan Stok (Mendukung Scan)
@@ -278,7 +339,6 @@ formIssueStock.addEventListener('submit', function(e) {
 
     let sisaDipotong = amount;
 
-    // JIKA DARI SCANNER (Specific Batch Prioritas)
     if(specificBatchId) {
         let targetBatch = item.batches.find(b => b.idBatch == specificBatchId);
         if(targetBatch) {
@@ -292,7 +352,6 @@ formIssueStock.addEventListener('submit', function(e) {
         }
     }
 
-    // JIKA MANUAL / SISA POTONGAN MASIH ADA (Lanjut FIFO Normal)
     if(sisaDipotong > 0) {
         item.batches.sort((a, b) => new Date(a.expDate) - new Date(b.expDate));
         for (let i = 0; i < item.batches.length; i++) {
@@ -315,8 +374,7 @@ formIssueStock.addEventListener('submit', function(e) {
     saveDataToStorage(); renderStockData(); closeIssueModal();
 });
 
-// 8. LOGIKA LAINNYA (Tambah Stok, Opname, Edit, Delete, Export Excel) 
-// Tetap Sama Persis dengan milik Anda agar sistem stabil.
+// 8. LOGIKA LAINNYA 
 window.openAddBatchModal = function(id) { document.getElementById('addBatchId').value = id; formAddBatch.reset(); addBatchModal.classList.add('show'); }
 window.closeAddBatchModal = function() { addBatchModal.classList.remove('show'); }
 formAddBatch.addEventListener('submit', function(e) {
@@ -336,7 +394,7 @@ function catatRiwayat(nama, jenis, jumlah, sisa, satuan, alasan = '', keterangan
     riwayatStok.unshift(log); if(riwayatStok.length > 100) riwayatStok.pop(); saveHistoryToStorage();
 }
 
-window.openHistoryModal = function() { /* (Logika sama persis seperti source) */
+window.openHistoryModal = function() {
     historyContainer.innerHTML = '';
     if (riwayatStok.length === 0) { historyContainer.innerHTML = '<p style="text-align:center; margin-top: 1rem;">Belum ada riwayat transaksi.</p>'; } 
     else {
@@ -428,8 +486,125 @@ searchInput.addEventListener('input', renderStockData);
 tabButtons.forEach(button => { button.addEventListener('click', () => { tabButtons.forEach(btn => btn.classList.remove('active')); button.classList.add('active'); currentFilter = button.getAttribute('data-filter'); renderStockData(); }); });
 dashCards.forEach(card => { card.addEventListener('click', () => { dashCards.forEach(c => c.classList.remove('active')); card.classList.add('active'); currentAlertFilter = card.getAttribute('data-alert'); renderStockData(); }); });
 
-window.exportExcel = async function() { /* Script Export Excel Bawaan Anda (Tidak diubah) */ };
-window.exportJSON = function() { /* Script Export JSON Bawaan Anda (Tidak diubah) */ };
-window.importJSON = function(event) { /* Script Import JSON Bawaan Anda (Tidak diubah) */ };
+// 9. LOGIKA EXPORT & IMPORT DATA (FIXED)
+window.exportExcel = async function() {
+    if (typeof ExcelJS === 'undefined') {
+        alert("Library ExcelJS belum dimuat. Pastikan Anda memiliki koneksi internet aktif.");
+        return;
+    }
+    
+    const workbook = new ExcelJS.Workbook();
+    
+    // Sheet 1: Daftar Stok
+    const sheet1 = workbook.addWorksheet('Daftar Stok');
+    sheet1.columns = [
+        { header: 'Nama Bahan', key: 'nama', width: 25 },
+        { header: 'Kategori', key: 'kategori', width: 20 },
+        { header: 'Lokasi Gudang', key: 'lokasi', width: 15 },
+        { header: 'Total Qty', key: 'total', width: 15 },
+        { header: 'Satuan', key: 'satuan', width: 10 },
+        { header: 'Rincian Batch', key: 'batch', width: 45 }
+    ];
+    sheet1.getRow(1).font = { bold: true };
+    
+    daftarStok.forEach(item => {
+        let totalQty = item.batches.reduce((sum, b) => sum + b.kuantitas, 0);
+        let batchInfo = item.batches.map(b => `${b.kuantitas} (Exp: ${b.expDate})`).join(', ');
+        sheet1.addRow({
+            nama: item.namaBahan,
+            kategori: item.kategori || '-',
+            lokasi: item.lokasiGudang,
+            total: totalQty,
+            satuan: item.satuan,
+            batch: batchInfo
+        });
+    });
+
+    // Sheet 2: Riwayat
+    const sheet2 = workbook.addWorksheet('Riwayat Transaksi');
+    sheet2.columns = [
+        { header: 'Tanggal', key: 'tanggal', width: 20 },
+        { header: 'Nama Bahan', key: 'nama', width: 25 },
+        { header: 'Jenis', key: 'jenis', width: 10 },
+        { header: 'Jumlah', key: 'jumlah', width: 10 },
+        { header: 'Sisa Stok', key: 'sisa', width: 10 },
+        { header: 'Satuan', key: 'satuan', width: 10 },
+        { header: 'Alasan', key: 'alasan', width: 20 },
+        { header: 'Keterangan', key: 'keterangan', width: 30 }
+    ];
+    sheet2.getRow(1).font = { bold: true };
+    
+    riwayatStok.forEach(log => {
+        sheet2.addRow({
+            tanggal: log.tanggal,
+            nama: log.namaBahan,
+            jenis: log.jenis,
+            jumlah: log.jumlah,
+            sisa: log.sisa,
+            satuan: log.satuan,
+            alasan: log.alasan || '-',
+            keterangan: log.keterangan || '-'
+        });
+    });
+
+    // Generate file dan download otomatis
+    try {
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        saveAs(blob, `Laporan_Stok_MBG_${new Date().toISOString().split('T')[0]}.xlsx`);
+    } catch (error) {
+        alert("Gagal men-generate file Excel.");
+        console.error(error);
+    }
+};
+
+window.exportJSON = function() {
+    const dataToExport = {
+        daftarStok: daftarStok,
+        riwayatStok: riwayatStok
+    };
+    
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `backup_stok_mbg_${new Date().toISOString().split('T')[0]}.json`);
+    
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+};
+
+window.importJSON = function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedData = JSON.parse(e.target.result);
+            // Validasi sederhana struktur JSON
+            if (importedData.daftarStok && importedData.riwayatStok) {
+                daftarStok = importedData.daftarStok;
+                riwayatStok = importedData.riwayatStok;
+                
+                // Simpan ke storage dan perbarui tampilan
+                saveDataToStorage();
+                saveHistoryToStorage();
+                renderStockData();
+                
+                alert('Data berhasil di-restore!');
+            } else {
+                alert('Format JSON tidak sesuai dengan sistem MBG!');
+            }
+        } catch (error) {
+            alert('Gagal membaca file JSON!');
+            console.error(error);
+        }
+    };
+    reader.readAsText(file);
+    
+    // Kosongkan input agar bisa mengimport file yang sama lagi jika perlu
+    event.target.value = '';
+};
 
 document.addEventListener('DOMContentLoaded', renderStockData);

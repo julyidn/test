@@ -452,3 +452,51 @@ select {
     box-shadow: 2px 2px 4px var(--shadow-dark);
     cursor: pointer;
 }
+
+/* =========================================
+   PRINT CSS (FALLBACK JIKA CTRL+P DI BROWSER)
+   ========================================= */
+@media print {
+    /* Sembunyikan semua elemen latar belakang */
+    body * {
+        visibility: hidden;
+    }
+    
+    /* Hanya tampilkan modal QR */
+    #qrModal, #qrModal * {
+        visibility: visible;
+    }
+    
+    /* Hilangkan background dan bayangan (Neumorphism hapus sementara saat print) */
+    #qrModal {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: auto;
+        background: transparent !important;
+        backdrop-filter: none;
+        box-shadow: none !important;
+    }
+    
+    .modal-card {
+        box-shadow: none !important;
+        border: none;
+        margin: 0;
+        padding: 0;
+        max-width: 100%;
+    }
+
+    /* Sembunyikan tombol, dan teks instruksi tambahan */
+    #qrModal p, #qrModal button, #qrTitle {
+        display: none !important;
+    }
+    
+    #qrcode-container {
+        display: flex !important;
+        justify-content: center;
+        align-items: center;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+}
