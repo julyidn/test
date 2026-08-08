@@ -831,7 +831,9 @@ window.importJSON = function(event) {
 };
 
 
-// --- QR GENERATOR DAN SCANNER ---
+// --- QR GENERATOR DAN SCANNER (LOGIKA DIPERBAIKI) ---
+
+// Generate QR: Reset isi elemen setiap dipanggil
 window.showQRCode = function(idBahan, idBatch, namaBahan, expDate) {
     const qrContainer = document.getElementById('qrcode-container');
     qrContainer.innerHTML = ''; 
@@ -843,34 +845,65 @@ window.showQRCode = function(idBahan, idBatch, namaBahan, expDate) {
 
 window.closeQRModal = function() { qrModal.classList.remove('show'); }
 
+// Print QR: Ambil fallback langsung dari canvas jika src IMG kosong
 window.printQRLabel = function() { 
     const qrContainer = document.getElementById('qrcode-container');
-    const img = qrContainer.querySelector('img');
-    if(!img) { showToast('QR Code belum siap untuk dicetak!', 'warning'); return; }
+    let img = qrContainer.querySelector('img');
+    let imgSrc = img && img.src ? img.src : '';
+
+    if (!imgSrc || imgSrc === window.location.href || imgSrc.endsWith('/')) {
+        const canvas = qrContainer.querySelector('canvas');
+        if (canvas) {
+            imgSrc = canvas.toDataURL("image/png");
+        }
+    }
+
+    if(!imgSrc) { 
+        showToast('QR Code belum siap untuk dicetak!', 'warning'); 
+        return; 
+    }
     
     const printWindow = window.open('', '_blank', 'width=450,height=450');
     printWindow.document.write(`
         <html>
             <head><title>Print QR Label</title></head>
             <body style="text-align:center; padding-top: 30px; font-family: sans-serif;">
-                <img src="${img.src}" style="width:160px; height:160px; margin-bottom: 10px;" />
+                <img src="${imgSrc}" style="width:160px; height:160px; margin-bottom: 10px;" />
                 <h4 style="margin:0; padding:0; color:#2d3748;">${document.getElementById('qrTitle').innerText.replace('QR: ', '')}</h4>
-                <script>window.onload = function() { window.print(); window.close(); }<\/script>
+                <script>
+                    window.onload = function() { 
+                        setTimeout(function() {
+                            window.print(); 
+                            window.close(); 
+                        }, 300); // Beri jeda 300ms agar DOM & gambar merender dengan sempurna
+                    }
+                <\/script>
             </body>
         </html>
     `);
     printWindow.document.close();
 }
 
+// Open Scanner: Cegah double instance yang bikin error
 window.openScannerModal = function() { 
     scannerModal.classList.add('show');
-    if (!html5QrcodeScanner) html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false);
-    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    if (!html5QrcodeScanner) {
+        html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false);
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    }
 }
 
+// Close Scanner: Bersihkan object dengan Promise (.then)
 window.closeScannerModal = function() { 
     scannerModal.classList.remove('show');
-    if (html5QrcodeScanner) { html5QrcodeScanner.clear().catch(err => console.error(err)); html5QrcodeScanner = null; }
+    if (html5QrcodeScanner) { 
+        html5QrcodeScanner.clear().then(() => {
+            html5QrcodeScanner = null;
+        }).catch(err => {
+            console.error("Gagal menutup scanner:", err);
+            html5QrcodeScanner = null;
+        });
+    }
 }
 
 function onScanSuccess(decodedText, decodedResult) {
@@ -886,14 +919,17 @@ function onScanSuccess(decodedText, decodedResult) {
         
         document.getElementById('scanItemDesc').innerText = `${item.namaBahan} (${batchText})`;
         scanActionModal.classList.add('show');
-    } catch (e) { showToast("Format QR Code tidak dikenali oleh sistem ini.", "danger"); }
+    } catch (e) { 
+        showToast("Format QR Code tidak dikenali oleh sistem ini.", "danger"); 
+    }
 }
 
-function onScanFailure(error) { }
+function onScanFailure(error) { 
+    // Dibiarkan kosong agar console tidak penuh saat kamera mencari barcode
+}
 
 window.closeScanActionModal = function() { scanActionModal.classList.remove('show'); tempScanData = null; }
 
-// PERBAIKAN BUG DISINI: Menyimpan data ke variabel lokal sebelum memanggil closeScanActionModal()
 window.triggerScanAdd = function() { 
     if(tempScanData && tempScanData.idBahan) { 
         const idBahan = tempScanData.idBahan;
