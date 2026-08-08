@@ -120,7 +120,7 @@ function getTotalInEceran(item) {
     let totalBatchQty = item.batches.reduce((sum, b) => sum + b.kuantitas, 0);
     return item.hasEceran 
         ? (totalBatchQty * (item.isiPerKardus || 1)) + (item.stokEceran || 0)
-        : totalBatchQty; // Jika tak diecer, nilainya hanya batch saja
+        : totalBatchQty; 
 }
 
 // 3. Kalkulasi Dashboard
@@ -892,8 +892,24 @@ function onScanSuccess(decodedText, decodedResult) {
 function onScanFailure(error) { }
 
 window.closeScanActionModal = function() { scanActionModal.classList.remove('show'); tempScanData = null; }
-window.triggerScanAdd = function() { if(tempScanData && tempScanData.idBahan) { closeScanActionModal(); openAddBatchModal(tempScanData.idBahan); } }
-window.triggerScanIssue = function() { if(tempScanData && tempScanData.idBahan) { closeScanActionModal(); openIssueModal(tempScanData.idBahan, tempScanData.idBatch); } }
+
+// PERBAIKAN BUG DISINI: Menyimpan data ke variabel lokal sebelum memanggil closeScanActionModal()
+window.triggerScanAdd = function() { 
+    if(tempScanData && tempScanData.idBahan) { 
+        const idBahan = tempScanData.idBahan;
+        closeScanActionModal(); 
+        openAddBatchModal(idBahan); 
+    } 
+}
+
+window.triggerScanIssue = function() { 
+    if(tempScanData && tempScanData.idBahan) { 
+        const idBahan = tempScanData.idBahan;
+        const idBatch = tempScanData.idBatch;
+        closeScanActionModal(); 
+        openIssueModal(idBahan, idBatch); 
+    } 
+}
 
 searchInput.addEventListener('input', renderStockData);
 tabButtons.forEach(button => { button.addEventListener('click', () => { tabButtons.forEach(btn => btn.classList.remove('active')); button.classList.add('active'); currentFilter = button.getAttribute('data-filter'); renderStockData(); }); });
