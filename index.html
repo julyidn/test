@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Manajemen Stok Bahan MBG</title>
+    <title>Sistem Manajemen Stok Bahan</title>
     
-    <!-- Google Fonts: Inter untuk tampilan modern & bersih -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Library Eksternal -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -19,9 +17,8 @@
 <body>
 
     <div class="container">
-        <h1 class="header-title">Manajemen Stok MBG</h1>
+        <h1 class="header-title">Manajemen Stok</h1>
 
-        <!-- Area Manajemen Data & Laporan -->
         <div class="card">
             <h2>Manajemen Data & Laporan</h2>
             <div class="action-buttons" style="display: flex; gap: 1rem; flex-wrap: wrap;">
@@ -36,43 +33,87 @@
             </p>
         </div>
 
-        <!-- Area Form Input -->
         <div class="card">
             <h2>Input Bahan Baru / Tambah Batch</h2>
             <form id="formInputStok">
                 <div class="form-grid">
                     <div class="form-group full-width">
                         <label for="namaBahan">Nama Bahan</label>
-                        <input type="text" id="namaBahan" placeholder="Contoh: Tepung Terigu (Otomatis menggabung jika nama sama)" required>
+                        <input type="text" id="namaBahan" placeholder="Contoh: Tepung Terigu / Aqua Galon" required>
                     </div>
                     <div class="form-group">
                         <label for="kategori">Kategori Bahan</label>
                         <select id="kategori" required>
                             <option value="" disabled selected>Pilih kategori...</option>
-                            <option value="Sembako/Karbohidrat">Sembako/Karbohidrat</option>
-                            <option value="Daging/Protein">Daging/Protein</option>
+                            <option value="Sembako & Karbohidrat">Sembako & Karbohidrat</option>
+                            <option value="Daging & Protein">Daging & Protein</option>
                             <option value="Sayuran & Buah">Sayuran & Buah</option>
-                            <option value="Bumbu & Rempah">Bumbu & Rempah</option>
-                            <option value="Susu & Olahan">Susu & Olahan</option>
+                            <option value="Bumbu, Rempah & Penyedap">Bumbu, Rempah & Penyedap</option>
+                            <option value="Saus, Minyak & Kondimen">Saus, Minyak & Kondimen</option>
+                            <option value="Susu, Keju & Olahan">Susu, Keju & Olahan</option>
+                            <option value="Minuman & Air Minum">Minuman & Air Minum</option>
+                            <option value="Perlengkapan & Kebersihan">Perlengkapan & Kebersihan</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="kuantitas">Kuantitas</label>
+                        <label for="kuantitas">Kuantitas Masuk (Batch)</label>
                         <input type="number" step="any" id="kuantitas" placeholder="0" min="0" required>
                     </div>
+                    
+                    <div class="form-group full-width" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--primary-color);">
+                            <input type="checkbox" id="hasEceran" checked style="width: auto; box-shadow: none;" onchange="toggleEceran()">
+                            <span>Bahan ini bisa diecer / dibongkar (Memiliki satuan yang lebih kecil)</span>
+                        </label>
+                    </div>
+
                     <div class="form-group">
-                        <label for="satuan">Satuan</label>
-                        <select id="satuan" required>
-                            <option value="" disabled selected>Pilih satuan...</option>
+                        <label for="satuanBesar">Satuan Utama</label>
+                        <select id="satuanBesar" required onchange="toggleEceran()">
+                            <option value="" disabled selected>Pilih satuan utama...</option>
+                            <option value="dus">Dus</option>
+                            <option value="karung">Karung</option>
+                            <option value="bal">Bal</option>
+                            <option value="butir">Butir</option>
+                            <option value="box">Box</option>
+                            <option value="jerigen">Jerigen</option>
+                            <option value="galon">Galon</option>
+                            <option value="tray">Tray</option>
                             <option value="kg">Kilogram (kg)</option>
-                            <option value="gram">Gram (g)</option>
+                            <option value="g">Gram (g)</option>
                             <option value="liter">Liter (L)</option>
+                            <option value="ml">Mililiter (ml)</option>
                             <option value="pcs">Pcs</option>
-                            <option value="pack">Pack</option>
+                            <option value="botol">Botol</option>
                         </select>
                     </div>
+                    
+                    <div class="form-group" id="containerSatuanKecil">
+                        <label for="satuanKecil">Satuan Eceran</label>
+                        <select id="satuanKecil" required>
+                            <option value="" disabled selected>Pilih satuan eceran...</option>
+                            <option value="pack">Pack</option>
+                            <option value="pcs">Pcs</option>
+                            <option value="gram">Gram (g)</option>
+                            <option value="kg">Kilogram (kg)</option>
+                            <option value="ml">Mililiter (ml)</option>
+                            <option value="liter">Liter (L)</option>
+                            <option value="sachet">Sachet</option>
+                            <option value="kaleng">Kaleng</option>
+                            <option value="botol">Botol</option>
+                            <option value="butir">Butir</option>
+                            <option value="blok">Blok</option>
+                            <option value="pouch">Pouch</option>
+                            <option value="jerigen">Jerigen</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="containerIsiPerKardus">
+                        <label for="isiPerKardus">Rasio Konversi</label>
+                        <input type="number" step="any" id="isiPerKardus" placeholder="Contoh: 1 Dus = 12 Pack (Isi 12)" min="1" required>
+                    </div>
+                    
                     <div class="form-group">
-                        <label for="minStock">Stok Minimum (Alert)</label>
+                        <label for="minStock" id="lblMinStock">Stok Minimum (Dalam Satuan Eceran)</label>
                         <input type="number" step="any" id="minStock" placeholder="0" min="0" required>
                     </div>
                     <div class="form-group">
@@ -96,7 +137,6 @@
             </form>
         </div>
 
-        <!-- Area Tampilan Data & Tab -->
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 1.5rem; gap: 1rem;">
                 <h2 style="margin-bottom: 0;">Daftar Stok Bahan</h2>
@@ -133,6 +173,19 @@
         </div>
     </div>
 
+    <!-- TOAST & CONFIRM MODAL -->
+    <div id="toastContainer" class="toast-container"></div>
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal-card" style="max-width: 400px; text-align: center;">
+            <h2 id="confirmTitle" style="margin-bottom: 1rem;">Konfirmasi</h2>
+            <p id="confirmMessage" style="margin-bottom: 1.5rem; font-weight: 500; color: var(--text-muted);"></p>
+            <div class="form-grid" style="gap: 1rem;">
+                <button type="button" class="btn-submit" id="btnConfirmYes" style="color: var(--danger-color);">Ya, Lanjutkan</button>
+                <button type="button" class="btn-submit" onclick="closeConfirmModal()" style="color: var(--text-muted);">Batal</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL EDIT INFO -->
     <div class="modal-overlay" id="editModal">
         <div class="modal-card">
@@ -147,25 +200,39 @@
                     <div class="form-group">
                         <label>Kategori</label>
                         <select id="editKategori" required>
-                            <option value="Sembako/Karbohidrat">Sembako/Karbohidrat</option>
-                            <option value="Daging/Protein">Daging/Protein</option>
+                            <option value="" disabled selected>Pilih kategori...</option>
+                            <option value="Sembako & Karbohidrat">Sembako & Karbohidrat</option>
+                            <option value="Daging & Protein">Daging & Protein</option>
                             <option value="Sayuran & Buah">Sayuran & Buah</option>
-                            <option value="Bumbu & Rempah">Bumbu & Rempah</option>
-                            <option value="Susu & Olahan">Susu & Olahan</option>
+                            <option value="Bumbu, Rempah & Penyedap">Bumbu, Rempah & Penyedap</option>
+                            <option value="Saus, Minyak & Kondimen">Saus, Minyak & Kondimen</option>
+                            <option value="Susu, Keju & Olahan">Susu, Keju & Olahan</option>
+                            <option value="Minuman & Air Minum">Minuman & Air Minum</option>
+                            <option value="Perlengkapan & Kebersihan">Perlengkapan & Kebersihan</option>
                         </select>
                     </div>
+                    
+                    <div class="form-group full-width">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--primary-color);">
+                            <input type="checkbox" id="editHasEceran" style="width: auto; box-shadow: none;" onchange="toggleEditEceran()">
+                            <span>Bahan ini bisa diecer / dibongkar kardus</span>
+                        </label>
+                    </div>
+
                     <div class="form-group">
-                        <label>Satuan</label>
-                        <select id="editSatuan" required>
-                            <option value="kg">Kilogram (kg)</option>
-                            <option value="gram">Gram (g)</option>
-                            <option value="liter">Liter (L)</option>
-                            <option value="pcs">Pcs</option>
-                            <option value="pack">Pack</option>
-                        </select>
+                        <label>Satuan Utama</label>
+                        <input type="text" id="editSatuanBesar" required>
+                    </div>
+                    <div class="form-group" id="editContainerSatuanKecil">
+                        <label>Satuan Eceran</label>
+                        <input type="text" id="editSatuanKecil" required>
+                    </div>
+                    <div class="form-group" id="editContainerIsiPerKardus">
+                        <label>Isi Per Kardus...</label>
+                        <input type="number" step="any" id="editIsiPerKardus" required>
                     </div>
                     <div class="form-group">
-                        <label>Stok Min.</label>
+                        <label id="editLblMinStock">Stok Min (Eceran)</label>
                         <input type="number" step="any" id="editMinStock" required>
                     </div>
                     <div class="form-group full-width">
@@ -189,12 +256,12 @@
     <!-- MODAL TAMBAH BATCH -->
     <div class="modal-overlay" id="addBatchModal">
         <div class="modal-card">
-            <h2>Tambah Stok (Batch Baru)</h2>
+            <h2>Tambah Stok Masuk</h2>
             <form id="formAddBatch">
                 <input type="hidden" id="addBatchId">
                 <div class="form-grid">
                     <div class="form-group full-width">
-                        <label>Kuantitas Masuk</label>
+                        <label id="addBatchLabel">Kuantitas Masuk</label>
                         <input type="number" step="any" id="addBatchQty" min="0.01" required>
                     </div>
                     <div class="form-group full-width">
@@ -210,6 +277,30 @@
         </div>
     </div>
 
+    <!-- MODAL BUKA KARDUS -->
+    <div class="modal-overlay" id="moveEceranModal">
+        <div class="modal-card">
+            <h2>Buka Kardus (Pindah ke Eceran)</h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                Pindahkan stok dari Batch Utama (kardus) ke Stok Eceran (luar kardus). Nilai akan otomatis dikonversi sesuai rasio.
+            </p>
+            <form id="formMoveEceran">
+                <input type="hidden" id="eceranItemId">
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label id="lblMoveEceran">Jumlah Kardus yang dibuka</label>
+                        <input type="number" step="any" id="eceranQty" min="0.01" required>
+                        <p id="lblMoveEceranPreview" style="font-size: 0.8rem; color: var(--primary-color); margin-top: 5px;"></p>
+                    </div>
+                    <div class="form-group full-width action-buttons" style="flex-direction: row; margin-top: 1rem;">
+                        <button type="submit" class="btn-submit" style="flex: 1; color: var(--warning-color);">Pindahkan</button>
+                        <button type="button" class="btn-submit" onclick="closeMoveEceranModal()" style="flex: 1; color: var(--text-muted);">Batal</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MODAL KELUARKAN STOK -->
     <div class="modal-overlay" id="issueModal">
         <div class="modal-card">
@@ -219,7 +310,14 @@
                 <input type="hidden" id="issueBatchId">
                 <div class="form-grid">
                     <div class="form-group full-width">
-                        <label>Jumlah Keluar</label>
+                        <label>Sumber Stok</label>
+                        <select id="issueSource" required onchange="updateIssueLabel()">
+                            <option value="eceran">Stok Eceran / Luar Kardus</option>
+                            <option value="batch">Stok Kardus (Batch Utama - FIFO)</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label id="lblIssueQty">Jumlah Keluar</label>
                         <input type="number" step="any" id="issueQty" min="0.01" required>
                     </div>
                     <div class="form-group full-width">
@@ -263,15 +361,19 @@
                 <input type="hidden" id="opnameId">
                 <div class="form-grid">
                     <div class="form-group full-width">
-                        <label>Sisa Stok di Sistem saat ini</label>
+                        <label>Informasi Sistem Saat Ini</label>
                         <input type="text" id="opnameSystemQty" disabled>
                     </div>
-                    <div class="form-group full-width">
-                        <label>Jumlah Riil di Lapangan (Fisik)</label>
-                        <input type="number" step="any" id="opnameActualQty" min="0" required>
+                    <div class="form-group">
+                        <label id="lblOpnameBatch">Fisik: Stok Utama</label>
+                        <input type="number" step="any" id="opnameActualBatch" min="0" required>
+                    </div>
+                    <div class="form-group" id="containerOpnameEceran">
+                        <label id="lblOpnameEceran">Fisik: Stok Eceran</label>
+                        <input type="number" step="any" id="opnameActualEceran" min="0" required>
                     </div>
                     <div class="form-group full-width" id="opnameExpDateContainer" style="display: none;">
-                        <label>Tanggal Kadaluwarsa</label>
+                        <label>Tanggal Expired (Jika ada surplus Utama)</label>
                         <input type="date" id="opnameExpDate">
                     </div>
                     <div class="form-group full-width">
@@ -287,7 +389,7 @@
         </div>
     </div>
 
-    <!-- MODAL PRINT QR -->
+    <!-- MODAL SCANNER & QR -->
     <div class="modal-overlay" id="qrModal">
         <div class="modal-card" style="text-align: center; max-width: 350px;">
             <h2 id="qrTitle">QR Code Batch</h2>
@@ -300,7 +402,6 @@
         </div>
     </div>
 
-    <!-- MODAL SCANNER -->
     <div class="modal-overlay" id="scannerModal">
         <div class="modal-card" style="max-width: 420px; text-align: center;">
             <h2>Scan QR Barang</h2>
@@ -309,7 +410,6 @@
         </div>
     </div>
 
-    <!-- MODAL AKSI SETELAH SCAN -->
     <div class="modal-overlay" id="scanActionModal">
         <div class="modal-card">
             <h2>Aksi Cepat Barcode</h2>
@@ -322,675 +422,9 @@
         </div>
     </div>
 
-    <!-- JavaScript Logic -->
-    <script>
-        // 1. Elemen DOM Utama
-        const formInputStok = document.getElementById('formInputStok');
-        const stockContainer = document.getElementById('stockContainer');
-        const tabButtons = document.querySelectorAll('.tab-btn');
-        const searchInput = document.getElementById('searchInput');
+    <!-- BUTTON SCROLL TO TOP -->
+    <button id="scrollTopBtn" class="btn-scroll-top" onclick="scrollToTop()" title="Kembali ke atas">↑</button>
 
-        // Elemen DOM Dashboard Cards
-        const dashCards = document.querySelectorAll('.dash-card');
-        const statTotal = document.getElementById('statTotal');
-        const statMin = document.getElementById('statMin');
-        const statExp = document.getElementById('statExp');
-
-        // Elemen DOM Modal
-        const editModal = document.getElementById('editModal');
-        const formEditStok = document.getElementById('formEditStok');
-        const addBatchModal = document.getElementById('addBatchModal');
-        const formAddBatch = document.getElementById('formAddBatch');
-        const issueModal = document.getElementById('issueModal');
-        const formIssueStock = document.getElementById('formIssueStock');
-        const historyModal = document.getElementById('historyModal');
-        const historyContainer = document.getElementById('historyContainer');
-        const opnameModal = document.getElementById('opnameModal');
-        const formOpname = document.getElementById('formOpname');
-
-        // Elemen DOM QR & Scanner
-        const qrModal = document.getElementById('qrModal');
-        const scannerModal = document.getElementById('scannerModal');
-        const scanActionModal = document.getElementById('scanActionModal');
-        let html5QrcodeScanner = null;
-        let tempScanData = null; 
-
-        // Key untuk LocalStorage & Variabel
-        const STORAGE_KEY = 'mbg_stok_bahan_v2'; 
-        const HISTORY_KEY = 'mbg_riwayat_stok_v2';
-        let currentFilter = 'semua';
-        let currentAlertFilter = 'semua'; 
-        let daftarStok = loadDataFromStorage();
-        let riwayatStok = loadHistoryFromStorage();
-
-        // 2. Fungsi Akses Data
-        function loadDataFromStorage() {
-            const storedData = localStorage.getItem(STORAGE_KEY);
-            let data = storedData ? JSON.parse(storedData) : [];
-            data.forEach(item => {
-                if(item.kuantitas !== undefined && !item.batches) {
-                    item.batches = [{ idBatch: Date.now(), kuantitas: item.kuantitas, expDate: item.expDate }];
-                    delete item.kuantitas;
-                    delete item.expDate;
-                }
-            });
-            return data;
-        }
-
-        function saveDataToStorage() { localStorage.setItem(STORAGE_KEY, JSON.stringify(daftarStok)); }
-        function loadHistoryFromStorage() { const storedData = localStorage.getItem(HISTORY_KEY); return storedData ? JSON.parse(storedData) : []; }
-        function saveHistoryToStorage() { localStorage.setItem(HISTORY_KEY, JSON.stringify(riwayatStok)); }
-
-        // 3. Kalkulasi Dashboard
-        function updateDashboard() {
-            const today = new Date(); today.setHours(0,0,0,0);
-            let countMenipis = 0; let countKadaluwarsa = 0;
-
-            daftarStok.forEach(item => {
-                let totalQty = item.batches.reduce((sum, b) => sum + b.kuantitas, 0);
-                if (totalQty <= (item.minStock || 0)) countMenipis++;
-
-                let isHampirExp = item.batches.some(b => {
-                    const exp = new Date(b.expDate);
-                    const daysDiff = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 3600 * 24));
-                    return daysDiff <= 7;
-                });
-                if (isHampirExp) countKadaluwarsa++;
-            });
-            statTotal.innerText = daftarStok.length; statMin.innerText = countMenipis; statExp.innerText = countKadaluwarsa;
-        }
-
-        // 4. Render & Filter Tampilan
-        function renderStockData() {
-            stockContainer.innerHTML = ''; updateDashboard(); 
-
-            const query = searchInput.value.toLowerCase();
-            const today = new Date(); today.setHours(0,0,0,0);
-
-            const filteredData = daftarStok.filter(item => {
-                const matchGudang = currentFilter === 'semua' || item.lokasiGudang === currentFilter;
-                const matchSearch = item.namaBahan.toLowerCase().includes(query);
-                let totalQty = item.batches.reduce((sum, b) => sum + b.kuantitas, 0);
-                let isMenipis = totalQty <= (item.minStock || 0);
-
-                let isHampirExp = item.batches.some(b => {
-                    const exp = new Date(b.expDate);
-                    const daysDiff = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 3600 * 24));
-                    return daysDiff <= 7;
-                });
-
-                let matchAlert = true;
-                if (currentAlertFilter === 'min') matchAlert = isMenipis;
-                else if (currentAlertFilter === 'exp') matchAlert = isHampirExp;
-
-                return matchGudang && matchSearch && matchAlert;
-            });
-
-            if (filteredData.length === 0) {
-                stockContainer.innerHTML = `<p>Tidak ada data ditemukan.</p>`; return;
-            }
-
-            const stockListElement = document.createElement('div');
-            stockListElement.className = 'stock-list';
-
-            filteredData.forEach(item => {
-                let totalQty = item.batches.reduce((sum, b) => sum + b.kuantitas, 0);
-                let daysDiffNearest = Infinity;
-                item.batches.forEach(b => {
-                    const exp = new Date(b.expDate); const daysDiff = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 3600 * 24));
-                    if(daysDiff < daysDiffNearest) daysDiffNearest = daysDiff;
-                });
-
-                let expBadge = '';
-                if (daysDiffNearest !== Infinity) {
-                    if (daysDiffNearest < 0) expBadge = '<span class="badge danger">Ada yg Kadaluwarsa!</span>';
-                    else if (daysDiffNearest <= 7) expBadge = `<span class="badge warning">Exp dlm ${daysDiffNearest} hr</span>`;
-                    else expBadge = `<span class="badge primary">Exp Aman</span>`;
-                }
-                let stockBadge = totalQty <= (item.minStock || 0) ? '<span class="badge danger">Stok Menipis</span>' : '';
-
-                let batchesHtml = item.batches.sort((a,b) => new Date(a.expDate) - new Date(b.expDate)).map(b => `
-                    <div class="batch-row">
-                        <div style="flex: 1; display:flex; justify-content:space-between; align-items:center;">
-                            <span>Exp: ${b.expDate}</span>
-                            <strong>${b.kuantitas} ${item.satuan}</strong>
-                            <button class="btn-qr" onclick="showQRCode(${item.id}, ${b.idBatch}, '${item.namaBahan}', '${b.expDate}')">Print QR</button>
-                        </div>
-                    </div>
-                `).join('');
-
-                const card = document.createElement('div'); card.className = 'stock-card';
-                card.innerHTML = `
-                    <div class="stock-info">
-                        <span class="stock-name">${item.namaBahan}</span>
-                        <span class="stock-kategori">${item.kategori || 'Tanpa Kategori'}</span>
-                        <div class="badges-container">
-                            ${stockBadge}
-                            ${expBadge}
-                        </div>
-                        <div class="batch-list-container">
-                            <div class="batch-list-title">Rincian Batch (FIFO):</div>
-                            ${batchesHtml}
-                        </div>
-                    </div>
-                    
-                    <div class="stock-controls-wrapper">
-                        <div class="stock-qty-adjust">
-                            <button class="btn-qty" onclick="openIssueModal(${item.id})" title="Keluarkan Stok (FIFO)">-</button>
-                            <div class="qty-display">${totalQty} <small>${item.satuan}</small></div>
-                            <button class="btn-qty" onclick="openAddBatchModal(${item.id})" title="Tambah Stok">+</button>
-                        </div>
-                        <div class="action-buttons">
-                            <button class="btn-action text-primary" onclick="openOpnameModal(${item.id})">Opname</button>
-                            <button class="btn-action text-primary" onclick="openEditModal(${item.id})">Edit Info</button>
-                            <button class="btn-action text-danger" onclick="deleteStock(${item.id})">Hapus</button>
-                        </div>
-                    </div>
-                `;
-                stockListElement.appendChild(card);
-            });
-            stockContainer.appendChild(stockListElement);
-        }
-
-        // 5. FITUR: GENERATE & CETAK QR CODE
-        window.showQRCode = function(idBahan, idBatch, namaBahan, expDate) {
-            const qrContainer = document.getElementById('qrcode-container');
-            qrContainer.innerHTML = ""; 
-            
-            const qrText = `MBG|${idBahan}|${idBatch}`;
-            
-            qrContainer.setAttribute('data-nama', namaBahan);
-            qrContainer.setAttribute('data-exp', expDate);
-            qrContainer.setAttribute('data-batch', idBatch);
-            
-            document.getElementById('qrTitle').innerText = `${namaBahan} (Exp: ${expDate})`;
-            
-            new QRCode(qrContainer, {
-                text: qrText,
-                width: 150,
-                height: 150,
-                colorDark : "#2d3748",
-                colorLight : "#e0e5ec",
-                correctLevel : QRCode.CorrectLevel.M
-            });
-            
-            qrModal.classList.add('show');
-        }
-        window.closeQRModal = function() { qrModal.classList.remove('show'); }
-
-        window.printQRLabel = function() {
-            const qrContainer = document.getElementById('qrcode-container');
-            const canvas = qrContainer.querySelector('canvas');
-            const img = qrContainer.querySelector('img');
-            let qrSrc = '';
-            
-            if (canvas) {
-                qrSrc = canvas.toDataURL("image/png");
-            } else if (img && img.src) {
-                qrSrc = img.src;
-            } else {
-                alert("Sistem masih merender QR Code, tunggu sedetik dan coba lagi.");
-                return;
-            }
-
-            const namaBahan = qrContainer.getAttribute('data-nama') || "Bahan MBG";
-            const expDate = qrContainer.getAttribute('data-exp') || "-";
-            const batchId = qrContainer.getAttribute('data-batch') || "-";
-
-            const printWindow = window.open('', '_blank', 'width=400,height=400');
-            
-            printWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Cetak QR Stiker</title>
-                    <link rel="stylesheet" href="style.css">
-                </head>
-                <body>
-                    <div class="label-wrapper">
-                        <div class="qr-box">
-                            <img src="${qrSrc}" alt="QR Code" />
-                        </div>
-                        <div class="info-box">
-                            <div class="nama-bahan">${namaBahan}</div>
-                            <div class="detail-teks"><b>Exp:</b><br>${expDate}</div>
-                            <div class="detail-teks"><b>Batch:</b> ${batchId}</div>
-                        </div>
-                    </div>
-                    <script>
-                        window.onload = function() {
-                            setTimeout(() => {
-                                window.print();
-                                window.close();
-                            }, 300);
-                        };
-                    <\/script>
-                </body>
-                </html>
-            `);
-            printWindow.document.close();
-        }
-
-        // 6. FITUR: SCANNER QR CODE (KAMERA)
-        window.openScannerModal = function() {
-            scannerModal.classList.add('show');
-            html5QrcodeScanner = new Html5Qrcode("reader");
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-            
-            html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
-            .catch(err => {
-                alert("Gagal mengakses kamera. Pastikan Anda memberikan izin kamera ke browser.");
-            });
-        }
-        window.closeScannerModal = function() {
-            if(html5QrcodeScanner) {
-                html5QrcodeScanner.stop().then(() => {
-                    html5QrcodeScanner.clear();
-                }).catch(err => console.log(err));
-            }
-            scannerModal.classList.remove('show');
-        }
-
-        function onScanSuccess(decodedText, decodedResult) {
-            const parts = decodedText.split('|');
-            if(parts.length === 3 && parts[0] === 'MBG') {
-                closeScannerModal(); 
-                
-                const idBahan = parseInt(parts[1]);
-                const idBatch = parseInt(parts[2]);
-                
-                const item = daftarStok.find(i => i.id === idBahan);
-                if(!item) return alert("Barang tidak ditemukan di database!");
-                
-                const batch = item.batches.find(b => b.idBatch === idBatch);
-                if(!batch) return alert("Batch tidak valid atau sudah habis.");
-                
-                tempScanData = { idBahan, idBatch, item, batch };
-                
-                document.getElementById('scanItemDesc').innerText = `${item.namaBahan} (Sisa Batch Ini: ${batch.kuantitas} ${item.satuan})`;
-                scanActionModal.classList.add('show');
-            } else {
-                alert("QR Code bukan format sistem MBG!");
-            }
-        }
-        window.closeScanActionModal = function() { scanActionModal.classList.remove('show'); }
-
-        window.triggerScanAdd = function() {
-            closeScanActionModal();
-            openAddBatchModal(tempScanData.idBahan);
-            document.getElementById('addBatchExp').value = tempScanData.batch.expDate;
-        }
-        window.triggerScanIssue = function() {
-            closeScanActionModal();
-            openIssueModal(tempScanData.idBahan, tempScanData.idBatch); 
-        }
-
-        // 7. Modifikasi Form Keluarkan Stok
-        window.openIssueModal = function(id, specificBatchId = null) {
-            const item = daftarStok.find(i => i.id === id);
-            if (!item) return;
-
-            let totalQty = item.batches.reduce((sum, b) => sum + b.kuantitas, 0);
-            if(totalQty <= 0) return alert("Stok habis, tidak bisa dikurangi.");
-
-            document.getElementById('issueId').value = id;
-            document.getElementById('issueBatchId').value = specificBatchId || "";
-            formIssueStock.reset();
-            issueModal.classList.add('show');
-        }
-        window.closeIssueModal = function() { issueModal.classList.remove('show'); }
-
-        formIssueStock.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const id = parseInt(document.getElementById('issueId').value);
-            const specificBatchId = document.getElementById('issueBatchId').value;
-            const item = daftarStok.find(i => i.id === id);
-            if (!item) return;
-
-            const amount = parseFloat(document.getElementById('issueQty').value);
-            const alasan = document.getElementById('issueReason').value;
-            const notes = document.getElementById('issueNotes').value;
-
-            let totalQty = item.batches.reduce((sum, b) => sum + b.kuantitas, 0);
-            if (totalQty < amount) return alert("Stok tidak mencukupi untuk dikeluarkan sejumlah tersebut!");
-
-            let targetBatch = specificBatchId ? item.batches.find(b => b.idBatch == specificBatchId) : null;
-            
-            if (targetBatch && targetBatch.kuantitas < amount) {
-                const sisaDibutuhkan = amount - targetBatch.kuantitas;
-                const pesanKonfirmasi = 
-                    `⚠️ PERINGATAN BATCH ⚠️
-
-` +
-                    `Stok pada batch yang Anda scan hanya tersisa ${targetBatch.kuantitas} ${item.satuan}.
-` +
-                    `Kekurangan sebanyak ${sisaDibutuhkan} ${item.satuan} akan DITARIK SECARA OTOMATIS dari batch lain (metode FIFO).
-
-` +
-                    `Pastikan Anda benar-benar mengambil fisik barang dari batch lain di gudang.
-` +
-                    `Apakah Anda yakin ingin melanjutkan?`;
-                    
-                if (!confirm(pesanKonfirmasi)) {
-                    return; 
-                }
-            }
-
-            let sisaDipotong = amount;
-
-            if(targetBatch) {
-                if(targetBatch.kuantitas >= sisaDipotong) {
-                    targetBatch.kuantitas -= sisaDipotong;
-                    sisaDipotong = 0;
-                } else {
-                    sisaDipotong -= targetBatch.kuantitas;
-                    targetBatch.kuantitas = 0;
-                }
-            }
-
-            if(sisaDipotong > 0) {
-                item.batches.sort((a, b) => new Date(a.expDate) - new Date(b.expDate));
-                for (let i = 0; i < item.batches.length; i++) {
-                    if (sisaDipotong <= 0) break;
-                    let batch = item.batches[i];
-                    
-                    if (batch.kuantitas <= 0) continue;
-
-                    if (batch.kuantitas >= sisaDipotong) {
-                        batch.kuantitas -= sisaDipotong;
-                        sisaDipotong = 0;
-                    } else {
-                        sisaDipotong -= batch.kuantitas;
-                        batch.kuantitas = 0;
-                    }
-                }
-            }
-
-            item.batches = item.batches.filter(b => b.kuantitas > 0);
-            
-            let newTotal = item.batches.reduce((sum, b) => sum + b.kuantitas, 0);
-            catatRiwayat(item.namaBahan, 'Keluar', amount, newTotal, item.satuan, alasan, notes);
-
-            saveDataToStorage(); renderStockData(); closeIssueModal();
-        });
-
-        // 8. LOGIKA LAINNYA 
-        window.openAddBatchModal = function(id) { document.getElementById('addBatchId').value = id; formAddBatch.reset(); addBatchModal.classList.add('show'); }
-        window.closeAddBatchModal = function() { addBatchModal.classList.remove('show'); }
-        
-        formAddBatch.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const id = parseInt(document.getElementById('addBatchId').value); const item = daftarStok.find(i => i.id === id);
-            if(item) {
-                const qty = parseFloat(document.getElementById('addBatchQty').value); const exp = document.getElementById('addBatchExp').value;
-                item.batches.push({ idBatch: Date.now(), kuantitas: qty, expDate: exp });
-                let newTotal = item.batches.reduce((sum, b) => sum + b.kuantitas, 0);
-                catatRiwayat(item.namaBahan, 'Masuk', qty, newTotal, item.satuan);
-                saveDataToStorage(); renderStockData(); closeAddBatchModal();
-            }
-        });
-
-        function catatRiwayat(nama, jenis, jumlah, sisa, satuan, alasan = '', keterangan = '') {
-            const log = { id: Date.now(), tanggal: new Date().toLocaleString('id-ID'), namaBahan: nama, jenis: jenis, jumlah: jumlah, sisa: sisa, satuan: satuan, alasan: alasan, keterangan: keterangan };
-            riwayatStok.unshift(log); if(riwayatStok.length > 100) riwayatStok.pop(); saveHistoryToStorage();
-        }
-
-        window.openHistoryModal = function() {
-            historyContainer.innerHTML = '';
-            if (riwayatStok.length === 0) { historyContainer.innerHTML = '<p style="text-align:center; padding: 1rem;">Belum ada riwayat transaksi.</p>'; } 
-            else {
-                riwayatStok.forEach(log => {
-                    const isMasuk = log.jenis === 'Masuk';
-                    const colorClass = isMasuk ? 'text-green' : 'text-red';
-                    const sign = isMasuk ? '+' : '-';
-                    let extraInfoHtml = '';
-                    if (!isMasuk && log.alasan) {
-                        let badgeColor = log.alasan === 'Dimasak' ? 'primary' : 'danger';
-                        extraInfoHtml = `<div style="font-size: 0.8rem; margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(163,177,198,0.5);"><span class="badge ${badgeColor}">${log.alasan}</span> ${log.keterangan ? `<span style="color: var(--text-muted); font-style: italic; margin-left: 5px;">- ${log.keterangan}</span>` : ''}</div>`;
-                    }
-                    historyContainer.innerHTML += `
-                        <div class="history-item">
-                            <div class="history-header">
-                                <strong>${log.namaBahan}</strong>
-                                <span class="badge ${isMasuk ? 'success' : 'danger'}">${log.jenis}</span>
-                            </div>
-                            <div class="history-meta">
-                                <span>${log.tanggal}</span>
-                                <strong class="${colorClass}">${sign}${log.jumlah} ${log.satuan}</strong>
-                            </div>
-                            <div style="font-size: 0.85rem; margin-top: 5px; color: var(--text-muted);">
-                                Sisa stok akhir: <strong style="color: var(--text-color);">${log.sisa} ${log.satuan}</strong>
-                            </div>
-                            ${extraInfoHtml}
-                        </div>`;
-                });
-            }
-            historyModal.classList.add('show');
-        }
-        window.closeHistoryModal = function() { historyModal.classList.remove('show'); }
-
-        window.openOpnameModal = function(id) {
-            const item = daftarStok.find(i => i.id === id); if (!item) return;
-            let totalQty = item.batches.reduce((sum, b) => sum + b.kuantitas, 0);
-            document.getElementById('opnameId').value = id;
-            document.getElementById('opnameSystemQty').value = `${totalQty} ${item.satuan}`;
-            document.getElementById('opnameActualQty').value = totalQty;
-            document.getElementById('opnameNotes').value = '';
-            document.getElementById('opnameExpDateContainer').style.display = 'none';
-            document.getElementById('opnameActualQty').oninput = function() {
-                if (parseFloat(this.value) > totalQty) {
-                    document.getElementById('opnameExpDateContainer').style.display = 'flex';
-                    document.getElementById('opnameExpDate').required = true;
-                } else {
-                    document.getElementById('opnameExpDateContainer').style.display = 'none';
-                    document.getElementById('opnameExpDate').required = false;
-                }
-            };
-            opnameModal.classList.add('show');
-        }
-        window.closeOpnameModal = function() { opnameModal.classList.remove('show'); }
-
-        formOpname.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const id = parseInt(document.getElementById('opnameId').value); const item = daftarStok.find(i => i.id === id);
-            if (!item) return;
-            let systemQty = item.batches.reduce((sum, b) => sum + b.kuantitas, 0);
-            const actualQty = parseFloat(document.getElementById('opnameActualQty').value);
-            const notes = document.getElementById('opnameNotes').value;
-            if (actualQty === systemQty) { alert("Stok riil sama. Tidak ada penyesuaian."); closeOpnameModal(); return; }
-            if (actualQty < systemQty) {
-                let selisih = systemQty - actualQty; item.batches.sort((a, b) => new Date(a.expDate) - new Date(b.expDate));
-                let sisaDipotong = selisih;
-                for (let i = 0; i < item.batches.length; i++) {
-                    if (sisaDipotong <= 0) break; let batch = item.batches[i];
-                    if (batch.kuantitas >= sisaDipotong) { batch.kuantitas -= sisaDipotong; sisaDipotong = 0; } 
-                    else { sisaDipotong -= batch.kuantitas; batch.kuantitas = 0; }
-                }
-                item.batches = item.batches.filter(b => b.kuantitas > 0);
-                let newTotal = item.batches.reduce((sum, b) => sum + b.kuantitas, 0);
-                catatRiwayat(item.namaBahan, 'Keluar', selisih, newTotal, item.satuan, 'Selisih Hitung', '(Opname Defisit) ' + notes);
-            } else {
-                let selisih = actualQty - systemQty; const expDate = document.getElementById('opnameExpDate').value;
-                item.batches.push({ idBatch: Date.now(), kuantitas: selisih, expDate: expDate });
-                let newTotal = item.batches.reduce((sum, b) => sum + b.kuantitas, 0);
-                catatRiwayat(item.namaBahan, 'Masuk', selisih, newTotal, item.satuan, 'Selisih Hitung', '(Opname Surplus) ' + notes);
-            }
-            saveDataToStorage(); renderStockData(); closeOpnameModal();
-        });
-
-        window.openEditModal = function(id) { 
-            const item = daftarStok.find(i => i.id === id); 
-            if (item) { 
-                document.getElementById('editId').value = item.id; 
-                document.getElementById('editNama').value = item.namaBahan; 
-                document.getElementById('editKategori').value = item.kategori || ''; 
-                document.getElementById('editSatuan').value = item.satuan; 
-                document.getElementById('editMinStock').value = item.minStock || 0; 
-                document.getElementById('editLokasiGudang').value = item.lokasiGudang; 
-                editModal.classList.add('show'); 
-            } 
-        }
-        window.closeEditModal = function() { editModal.classList.remove('show'); }
-        
-        formEditStok.addEventListener('submit', function(e) { 
-            e.preventDefault(); 
-            const id = parseInt(document.getElementById('editId').value); 
-            const item = daftarStok.find(i => i.id === id); 
-            if (item) { 
-                item.namaBahan = document.getElementById('editNama').value.trim(); 
-                item.kategori = document.getElementById('editKategori').value; 
-                item.satuan = document.getElementById('editSatuan').value; 
-                item.minStock = parseFloat(document.getElementById('editMinStock').value); 
-                item.lokasiGudang = document.getElementById('editLokasiGudang').value; 
-                saveDataToStorage(); renderStockData(); closeEditModal(); 
-            } 
-        });
-
-        window.deleteStock = function(id) { if (confirm('Yakin ingin menghapus seluruh data barang ini?')) { daftarStok = daftarStok.filter(item => item.id !== id); saveDataToStorage(); renderStockData(); } }
-
-        formInputStok.addEventListener('submit', function (event) {
-            event.preventDefault(); 
-            const namaBahanInput = document.getElementById('namaBahan').value.trim();
-            const existingItemIndex = daftarStok.findIndex(i => i.namaBahan.toLowerCase() === namaBahanInput.toLowerCase());
-            if (existingItemIndex !== -1) {
-                daftarStok[existingItemIndex].batches.push({ idBatch: Date.now(), kuantitas: parseFloat(document.getElementById('kuantitas').value), expDate: document.getElementById('expDate').value });
-                alert(`Bahan "${namaBahanInput}" sudah ada. Kuantitas berhasil ditambahkan ke dalam Batch baru.`);
-            } else {
-                daftarStok.push({ id: Date.now(), namaBahan: namaBahanInput, kategori: document.getElementById('kategori').value, satuan: document.getElementById('satuan').value, minStock: parseFloat(document.getElementById('minStock').value), lokasiGudang: document.getElementById('lokasiGudang').value, batches: [{ idBatch: Date.now(), kuantitas: parseFloat(document.getElementById('kuantitas').value), expDate: document.getElementById('expDate').value }] });
-            }
-            saveDataToStorage(); renderStockData(); formInputStok.reset();
-        });
-
-        searchInput.addEventListener('input', renderStockData);
-        
-        tabButtons.forEach(button => { 
-            button.addEventListener('click', () => { 
-                tabButtons.forEach(btn => btn.classList.remove('active')); 
-                button.classList.add('active'); 
-                currentFilter = button.getAttribute('data-filter'); 
-                renderStockData(); 
-            }); 
-        });
-        
-        dashCards.forEach(card => { 
-            card.addEventListener('click', () => { 
-                dashCards.forEach(c => c.classList.remove('active')); 
-                card.classList.add('active'); 
-                currentAlertFilter = card.getAttribute('data-alert'); 
-                renderStockData(); 
-            }); 
-        });
-
-        // 9. LOGIKA EXPORT & IMPORT DATA 
-        window.exportExcel = async function() {
-            if (typeof ExcelJS === 'undefined') {
-                alert("Library ExcelJS belum dimuat. Pastikan Anda memiliki koneksi internet aktif.");
-                return;
-            }
-            
-            const workbook = new ExcelJS.Workbook();
-            
-            // Sheet 1: Daftar Stok
-            const sheet1 = workbook.addWorksheet('Daftar Stok');
-            sheet1.columns = [
-                { header: 'Nama Bahan', key: 'nama', width: 25 },
-                { header: 'Kategori', key: 'kategori', width: 20 },
-                { header: 'Lokasi Gudang', key: 'lokasi', width: 15 },
-                { header: 'Total Qty', key: 'total', width: 15 },
-                { header: 'Satuan', key: 'satuan', width: 10 },
-                { header: 'Rincian Batch', key: 'batch', width: 45 }
-            ];
-            sheet1.getRow(1).font = { bold: true };
-            
-            daftarStok.forEach(item => {
-                let totalQty = item.batches.reduce((sum, b) => sum + b.kuantitas, 0);
-                let batchInfo = item.batches.map(b => `${b.kuantitas} (Exp: ${b.expDate})`).join(', ');
-                sheet1.addRow({
-                    nama: item.namaBahan,
-                    kategori: item.kategori || '-',
-                    lokasi: item.lokasiGudang,
-                    total: totalQty,
-                    satuan: item.satuan,
-                    batch: batchInfo
-                });
-            });
-
-            // Sheet 2: Riwayat
-            const sheet2 = workbook.addWorksheet('Riwayat Transaksi');
-            sheet2.columns = [
-                { header: 'Tanggal', key: 'tanggal', width: 20 },
-                { header: 'Nama Bahan', key: 'nama', width: 25 },
-                { header: 'Jenis', key: 'jenis', width: 10 },
-                { header: 'Jumlah', key: 'jumlah', width: 10 },
-                { header: 'Sisa Stok', key: 'sisa', width: 10 },
-                { header: 'Satuan', key: 'satuan', width: 10 },
-                { header: 'Alasan', key: 'alasan', width: 20 },
-                { header: 'Keterangan', key: 'keterangan', width: 30 }
-            ];
-            sheet2.getRow(1).font = { bold: true };
-            
-            riwayatStok.forEach(log => {
-                sheet2.addRow({
-                    tanggal: log.tanggal,
-                    nama: log.namaBahan,
-                    jenis: log.jenis,
-                    jumlah: log.jumlah,
-                    sisa: log.sisa,
-                    satuan: log.satuan,
-                    alasan: log.alasan || '-',
-                    keterangan: log.keterangan || '-'
-                });
-            });
-
-            try {
-                const buffer = await workbook.xlsx.writeBuffer();
-                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                saveAs(blob, `Laporan_Stok_MBG_${new Date().toISOString().split('T')[0]}.xlsx`);
-            } catch (error) {
-                alert("Gagal men-generate file Excel.");
-                console.error(error);
-            }
-        };
-
-        window.exportJSON = function() {
-            const dataToExport = { daftarStok: daftarStok, riwayatStok: riwayatStok };
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport, null, 2));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", `backup_stok_mbg_${new Date().toISOString().split('T')[0]}.json`);
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-        };
-
-        window.importJSON = function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const importedData = JSON.parse(e.target.result);
-                    if (importedData.daftarStok && importedData.riwayatStok) {
-                        daftarStok = importedData.daftarStok;
-                        riwayatStok = importedData.riwayatStok;
-                        saveDataToStorage();
-                        saveHistoryToStorage();
-                        renderStockData();
-                        alert('Data berhasil di-restore!');
-                    } else {
-                        alert('Format JSON tidak sesuai dengan sistem MBG!');
-                    }
-                } catch (error) {
-                    alert('Gagal membaca file JSON!');
-                    console.error(error);
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = '';
-        };
-
-        document.addEventListener('DOMContentLoaded', renderStockData);
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
