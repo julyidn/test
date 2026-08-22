@@ -17,7 +17,11 @@
 <body>
 
     <div class="container">
-        <h1 class="header-title">Manajemen Stok</h1>
+        <!-- HEADER DENGAN TOMBOL DARK MODE -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+            <h1 class="header-title" style="margin-bottom: 0;">Manajemen Stok</h1>
+            <button id="darkModeToggle" class="btn-action text-primary" style="padding: 0.5rem 1rem; border-radius: 20px;">🌙 Mode Gelap</button>
+        </div>
 
         <div class="card">
             <h2>Manajemen Data & Laporan</h2>
@@ -143,15 +147,22 @@
                 <button class="btn-action text-primary" onclick="openHistoryModal()">Lihat Riwayat Transaksi</button>
             </div>
 
+            <!-- PERBARUAN DASHBOARD DI SINI -->
             <div class="dashboard-grid">
                 <div class="dash-card active" data-alert="semua">
-                    <h4>Total Jenis Bahan</h4><p id="statTotal">0</p>
+                    <h4>Total Bahan</h4><p id="statTotal">0</p>
+                </div>
+                <div class="dash-card success-card" data-alert="aman">
+                    <h4>Stok Aman</h4><p id="statAman">0</p>
                 </div>
                 <div class="dash-card warning-card" data-alert="min">
                     <h4>Stok Menipis</h4><p id="statMin">0</p>
                 </div>
+                <div class="dash-card danger-card" data-alert="kosong">
+                    <h4>Stok Kosong</h4><p id="statKosong">0</p>
+                </div>
                 <div class="dash-card danger-card" data-alert="exp">
-                    <h4>Exp. / Hampir Exp.</h4><p id="statExp">0</p>
+                    <h4>Hampir Exp/Exp</h4><p id="statExp">0</p>
                 </div>
             </div>
             
@@ -326,7 +337,6 @@
                             <option value="Dimasak">Dimasak (Pemakaian Normal)</option>
                             <option value="Kadaluwarsa">Kadaluwarsa (Dibuang)</option>
                             <option value="Rusak/Busuk">Rusak / Busuk (Waste)</option>
-                            <option value="Selisih Hitung">Selisih Hitung (Opname)</option>
                         </select>
                     </div>
                     <div class="form-group full-width">
@@ -345,7 +355,10 @@
     <!-- MODAL RIWAYAT -->
     <div class="modal-overlay" id="historyModal">
         <div class="modal-card">
-            <h2>Riwayat Transaksi</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                <h2 style="margin-bottom: 0;">Riwayat Transaksi</h2>
+                <button type="button" class="btn-action text-danger" onclick="hapusSemuaRiwayat()" style="display: flex; align-items: center; gap: 0.5rem;" title="Hapus Semua Riwayat">🗑️ Hapus Semua</button>
+            </div>
             <div id="historyContainer" class="history-list"></div>
             <div class="form-group full-width action-buttons" style="margin-top: 1.5rem;">
                 <button type="button" class="btn-submit" onclick="closeHistoryModal()" style="width: 100%; color: var(--text-muted);">Tutup</button>
@@ -389,10 +402,10 @@
         </div>
     </div>
 
-    <!-- MODAL SCANNER & QR -->
+    <!-- MODAL SCANNER & QR MASTER -->
     <div class="modal-overlay" id="qrModal">
         <div class="modal-card" style="text-align: center; max-width: 350px;">
-            <h2 id="qrTitle">QR Code Batch</h2>
+            <h2 id="qrTitle">QR Bahan Baku</h2>
             <p style="font-size: 0.85rem; margin-bottom: 1.5rem; color: var(--text-muted);">Siapkan stiker di printer, lalu tekan tombol cetak.</p>
             <div id="qrcode-container"></div>
             <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
@@ -410,19 +423,27 @@
         </div>
     </div>
 
+    <!-- MODAL HASIL SCAN (FEFO) -->
     <div class="modal-overlay" id="scanActionModal">
-        <div class="modal-card">
-            <h2>Aksi Cepat Barcode</h2>
-            <p id="scanItemDesc" style="margin-bottom: 1.5rem; font-weight: 600; color: var(--text-color);"></p>
+        <div class="modal-card" style="max-width: 480px;">
+            <h2 style="text-align: center; margin-bottom: 0.5rem;">Informasi Bahan Baku</h2>
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <h3 id="scanItemName" style="color: var(--primary-color); font-size: 1.4rem; margin-bottom: 0.25rem;"></h3>
+                <p id="scanItemKategori" style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500;"></p>
+            </div>
+            
+            <h4 style="margin-bottom: 1rem; font-size: 1rem;">Daftar Batch Tersedia (Saran FEFO):</h4>
+            <div id="scanBatchList" style="max-height: 250px; overflow-y: auto; padding-right: 0.5rem; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                <!-- List Batch Di-inject di sini melalui JS -->
+            </div>
+
             <div class="form-grid">
-                <button type="button" class="btn-submit" onclick="triggerScanAdd()" style="color: var(--primary-color);">+ Tambah Stok (Batch Sama)</button>
-                <button type="button" class="btn-submit" onclick="triggerScanIssue()" style="color: var(--danger-color);">- Keluarkan Stok</button>
-                <button type="button" class="btn-submit full-width" onclick="closeScanActionModal()" style="color: var(--text-muted); margin-top: 0.5rem;">Batal</button>
+                <button type="button" class="btn-submit full-width" onclick="triggerScanAdd()" style="color: var(--primary-color);">+ Tambah Stok Masuk (Batch Baru)</button>
+                <button type="button" class="btn-submit full-width" onclick="closeScanActionModal()" style="color: var(--text-muted);">Tutup</button>
             </div>
         </div>
     </div>
 
-    <!-- BUTTON SCROLL TO TOP -->
     <button id="scrollTopBtn" class="btn-scroll-top" onclick="scrollToTop()" title="Kembali ke atas">↑</button>
 
     <script src="script.js"></script>
