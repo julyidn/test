@@ -77,10 +77,12 @@ window.toggleEceran = function() {
     document.getElementById('lblMinStock').innerText = hasEceran ? 'Stok Minimum (Dalam Satuan Eceran)' : `Stok Minimum (Dalam ${satuanUtama})`;
 };
 
+// DIPERBARUI: Menampilkan hide/show edit Stok Eceran
 window.toggleEditEceran = function() {
     const hasEceran = document.getElementById('editHasEceran').checked;
     document.getElementById('editContainerSatuanKecil').style.display = hasEceran ? 'flex' : 'none';
     document.getElementById('editContainerIsiPerKardus').style.display = hasEceran ? 'flex' : 'none';
+    document.getElementById('editContainerStokEceran').style.display = hasEceran ? 'flex' : 'none';
     document.getElementById('editSatuanKecil').required = hasEceran;
     document.getElementById('editIsiPerKardus').required = hasEceran;
     const satuanUtama = document.getElementById('editSatuanBesar').value || 'Satuan Utama';
@@ -117,7 +119,7 @@ function getTotalInEceran(item) {
     return item.hasEceran ? (totalBatchQty * (item.isiPerKardus || 1)) + (item.stokEceran || 0) : totalBatchQty; 
 }
 
-// 3. Kalkulasi Dashboard (Diperbarui dengan AMAN dan KOSONG)
+// 3. Kalkulasi Dashboard 
 function updateDashboard() {
     const today = new Date(); today.setHours(0,0,0,0);
     let countAman = 0; let countMenipis = 0; let countKosong = 0; let countKadaluwarsa = 0;
@@ -199,7 +201,6 @@ function renderStockData() {
             else expBadge = `<span class="badge primary">Exp Aman</span>`;
         }
 
-        // Tampilan Status Aman, Menipis, Kosong
         let stockBadge = '';
         if (totalEqv <= 0) {
             stockBadge = '<span class="badge danger">Stok Kosong</span>';
@@ -562,19 +563,92 @@ formInputStok.addEventListener('submit', function (event) {
     saveDataToStorage(); renderStockData(); formInputStok.reset(); toggleEceran();
 });
 
-// Edit & Hapus
+// DIPERBARUI: Edit & Hapus (Termasuk Batch & Eceran Dinamis)
 window.openEditModal = function(id) { 
     const item = daftarStok.find(i => i.id === id); 
     if (item) { 
-        document.getElementById('editId').value = item.id; document.getElementById('editNama').value = item.namaBahan; document.getElementById('editKategori').value = item.kategori || ''; 
-        document.getElementById('editHasEceran').checked = item.hasEceran; toggleEditEceran();
-        document.getElementById('editSatuanBesar').value = item.satuanBesar; document.getElementById('editSatuanKecil').value = item.hasEceran ? item.satuanKecil : ''; 
-        document.getElementById('editIsiPerKardus').value = item.hasEceran ? (item.isiPerKardus || 1) : ''; document.getElementById('editMinStock').value = item.minStock || 0; 
-        document.getElementById('editLokasiGudang').value = item.lokasiGudang; editModal.classList.add('show'); 
+        document.getElementById('editId').value = item.id; 
+        document.getElementById('editNama').value = item.namaBahan; 
+        document.getElementById('editKategori').value = item.kategori || ''; 
+        document.getElementById('editHasEceran').checked = item.hasEceran; 
+        
+        document.getElementById('editSatuanBesar').value = item.satuanBesar; 
+        document.getElementById('editSatuanKecil').value = item.hasEceran ? item.satuanKecil : ''; 
+        document.getElementById('editIsiPerKardus').value = item.hasEceran ? (item.isiPerKardus || 1) : ''; 
+        document.getElementById('editStokEceran').value = item.stokEceran || 0; // Populate Eceran
+        
+        document.getElementById('editMinStock').value = item.minStock || 0; 
+        document.getElementById('editLokasiGudang').value = item.lokasiGudang; 
+        
+        toggleEditEceran();
+        renderEditBatches(item); // Render Batch Inputs Dinamis
+
+        editModal.classList.add('show'); 
     } 
 }
 window.closeEditModal = function() { editModal.classList.remove('show'); }
 
+// FUNGSI BARU: Generate input dinamis untuk Batch
+function renderEditBatches(item) {
+    const container = document.getElementById('editBatchListContainer');
+    container.innerHTML = '';
+    if (item.batches && item.batches.length > 0) {
+        item.batches.sort((a, b) => new Date(a.expDate) - new Date(b.expDate)).forEach(b => {
+            container.innerHTML += `
+                <div class="batch-edit-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding: 1rem; background: var(--bg-color); border-radius: var(--border-radius-sm); box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);">
+                    <input type="hidden" class="edit-batch-id" value="${b.idBatch}">
+                    <div class="form-group">
+                        <label style="font-size: 0.8rem; font-weight: bold; margin-bottom: 5px;">Qty (${item.satuanBesar})</label>
+                        <input type="number" step="any" class="edit-batch-qty" value="${b.kuantitas}" min="0" required style="padding: 0.5rem; font-size: 0.9rem;">
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size: 0.8rem; font-weight: bold; margin-bottom: 5px;">Expired Date</label>
+                        <input type="date" class="edit-batch-exp" value="${b.expDate}" required style="padding: 0.5rem; font-size: 0.9rem;">
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        container.innerHTML = '<p style="font-size: 0.85rem; color: var(--text-muted); text-align: center;">Tidak ada batch. Stok utama kosong.</p>';
+    }
+}
+
+// FUNGSI BARU: Gabung Batch Otomatis
+window.mergeBatches = function() {
+    const id = parseInt(document.getElementById('editId').value); 
+    const item = daftarStok.find(i => i.id === id);
+    if (!item || !item.batches || item.batches.length <= 1) {
+        showToast("Tidak ada cukup batch untuk digabungkan.", "warning");
+        return;
+    }
+
+    let isMerged = false;
+    let mergedBatches = [];
+
+    // Cari dan gabungkan berdasarkan Expired Date yang sama
+    item.batches.forEach(b => {
+        let existing = mergedBatches.find(mb => mb.expDate === b.expDate);
+        if (existing) {
+            existing.kuantitas += b.kuantitas;
+            isMerged = true;
+        } else {
+            mergedBatches.push({...b});
+        }
+    });
+
+    if (isMerged) {
+        item.batches = mergedBatches;
+        catatRiwayat(item.namaBahan, 'Sistem', 0, getSisaText(item), item.satuanBesar, 'Merge Batch', 'Penggabungan batch dengan Expired Date yang identik');
+        saveDataToStorage();
+        renderStockData();
+        renderEditBatches(item); // Refresh UI dinamis
+        showToast("Batch berhasil dirapikan & digabung!", "success");
+    } else {
+        showToast("Tidak ada batch dengan Expired Date yang sama.", "warning");
+    }
+}
+
+// DIPERBARUI: Simpan Editan (Termasuk Eceran & Looping Batch)
 formEditStok.addEventListener('submit', function(e) { 
     e.preventDefault(); 
     const id = parseInt(document.getElementById('editId').value); const item = daftarStok.find(i => i.id === id); 
@@ -582,11 +656,66 @@ formEditStok.addEventListener('submit', function(e) {
         const hasEceran = document.getElementById('editHasEceran').checked;
         const satuanBesar = document.getElementById('editSatuanBesar').value;
 
-        item.namaBahan = document.getElementById('editNama').value.trim(); item.kategori = document.getElementById('editKategori').value; item.hasEceran = hasEceran; item.satuanBesar = satuanBesar;
-        if (hasEceran) { item.satuanKecil = document.getElementById('editSatuanKecil').value; item.isiPerKardus = parseFloat(document.getElementById('editIsiPerKardus').value); } 
-        else { item.satuanKecil = satuanBesar; item.isiPerKardus = 1; }
-        item.minStock = parseFloat(document.getElementById('editMinStock').value); item.lokasiGudang = document.getElementById('editLokasiGudang').value; 
-        saveDataToStorage(); renderStockData(); closeEditModal(); showToast('Informasi bahan berhasil diperbarui.', 'success');
+        item.namaBahan = document.getElementById('editNama').value.trim(); 
+        item.kategori = document.getElementById('editKategori').value; 
+        item.hasEceran = hasEceran; 
+        item.satuanBesar = satuanBesar;
+        
+        // Logika Update Eceran
+        if (hasEceran) { 
+            item.satuanKecil = document.getElementById('editSatuanKecil').value; 
+            item.isiPerKardus = parseFloat(document.getElementById('editIsiPerKardus').value); 
+            
+            const newEceranQty = parseFloat(document.getElementById('editStokEceran').value) || 0;
+            const diffEceran = newEceranQty - (item.stokEceran || 0);
+            
+            if (diffEceran !== 0) {
+                item.stokEceran = newEceranQty;
+                const jenis = diffEceran > 0 ? 'Masuk' : 'Keluar';
+                catatRiwayat(item.namaBahan, jenis, Math.abs(diffEceran), getSisaText(item), item.satuanKecil, 'Revisi Manual', 'Koreksi Langsung Stok Eceran');
+            }
+        } 
+        else { 
+            item.satuanKecil = satuanBesar; item.isiPerKardus = 1; item.stokEceran = 0; 
+        }
+        item.minStock = parseFloat(document.getElementById('editMinStock').value); 
+        item.lokasiGudang = document.getElementById('editLokasiGudang').value; 
+
+        // Logika Looping & Update Batch
+        const batchRows = document.querySelectorAll('#editBatchListContainer .batch-edit-row');
+        let updatedBatches = [];
+        
+        batchRows.forEach(row => {
+            const bId = parseInt(row.querySelector('.edit-batch-id').value);
+            const newQty = parseFloat(row.querySelector('.edit-batch-qty').value);
+            const newExp = row.querySelector('.edit-batch-exp').value;
+            
+            const oldBatch = item.batches.find(b => b.idBatch === bId);
+            
+            if (oldBatch) {
+                const diffBatch = newQty - oldBatch.kuantitas;
+                const expChanged = oldBatch.expDate !== newExp;
+                
+                // Set data baru sementara agar perhitungan sisaText log akurat
+                oldBatch.kuantitas = newQty; 
+                oldBatch.expDate = newExp;
+                
+                if (diffBatch !== 0) {
+                    const jenis = diffBatch > 0 ? 'Masuk' : 'Keluar';
+                    catatRiwayat(item.namaBahan, jenis, Math.abs(diffBatch), getSisaText(item), item.satuanBesar, 'Revisi Manual', `Koreksi Kuantitas Batch (Exp: ${newExp})`);
+                }
+                
+                if (expChanged && diffBatch === 0) { // Catat perubahan Exp jika tidak disertai perubahan Qty
+                    catatRiwayat(item.namaBahan, 'Sistem', 0, getSisaText(item), item.satuanBesar, 'Revisi Manual', `Ubah Expired Date menjadi ${newExp}`);
+                }
+                
+                if (newQty > 0) { updatedBatches.push(oldBatch); }
+            }
+        });
+        
+        item.batches = updatedBatches; // Filter menghapus batch yang Qty-nya dijadikan 0 (habis)
+
+        saveDataToStorage(); renderStockData(); closeEditModal(); showToast('Informasi, Stok, dan Batch berhasil diperbarui.', 'success');
     } 
 });
 
@@ -610,10 +739,11 @@ window.openHistoryModal = function() {
             else if(log.jenis === 'Keluar') { colorClass = 'text-red'; sign = '-'; badgeTrans = 'danger'; }
             else { colorClass = 'text-warning'; sign = ''; badgeTrans = 'warning'; }
 
-            let qtyDisplay = log.jenis === 'Pindah' ? log.jumlah : `${sign}${log.jumlah} ${log.satuan}`;
+            let qtyDisplay = (log.jenis === 'Pindah' || log.jenis === 'Sistem') ? log.jumlah : `${sign}${log.jumlah} ${log.satuan}`;
             let extraInfoHtml = '';
             if (log.alasan) {
                 let badgeColor = (log.alasan === 'Dimasak' || log.alasan === 'Buka Kardus') ? 'primary' : 'danger';
+                if(log.jenis === 'Sistem') badgeColor = 'warning';
                 extraInfoHtml = `<div style="font-size: 0.8rem; margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(163,177,198,0.5);"><span class="badge ${badgeColor}">${log.alasan}</span> ${log.keterangan ? `<span style="color: var(--text-muted); font-style: italic; margin-left: 5px;">- ${log.keterangan}</span>` : ''}</div>`;
             }
             

@@ -199,8 +199,9 @@
 
     <!-- MODAL EDIT INFO -->
     <div class="modal-overlay" id="editModal">
-        <div class="modal-card">
-            <h2>Edit Info Utama Bahan</h2>
+        <!-- Diperlebar agar input batch terlihat rapi -->
+        <div class="modal-card" style="max-width: 600px;">
+            <h2>Edit Info & Stok Bahan</h2>
             <form id="formEditStok">
                 <input type="hidden" id="editId">
                 <div class="form-grid">
@@ -239,8 +240,12 @@
                         <input type="text" id="editSatuanKecil" required>
                     </div>
                     <div class="form-group" id="editContainerIsiPerKardus">
-                        <label>Isi Per Kardus...</label>
+                        <label>Isi Per Kardus</label>
                         <input type="number" step="any" id="editIsiPerKardus" required>
+                    </div>
+                    <div class="form-group" id="editContainerStokEceran">
+                        <label>Koreksi Stok Eceran</label>
+                        <input type="number" step="any" id="editStokEceran" min="0">
                     </div>
                     <div class="form-group">
                         <label id="editLblMinStock">Stok Min (Eceran)</label>
@@ -255,10 +260,22 @@
                             <option value="offices">Gudang Offices</option>
                         </select>
                     </div>
-                    <div class="form-group full-width action-buttons" style="flex-direction: row; margin-top: 1rem;">
-                        <button type="submit" class="btn-submit" style="flex: 1;">Simpan</button>
-                        <button type="button" class="btn-submit" onclick="closeEditModal()" style="flex: 1; color: var(--text-muted);">Batal</button>
+                </div>
+
+                <!-- Bagian Rincian Batch (Dinamis) -->
+                <div class="form-group full-width" style="margin-top: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 10px;">
+                        <label style="margin:0; font-size: 1rem; color: var(--primary-color);">Rincian Batch & Exp Date (Stok Utama)</label>
+                        <button type="button" class="btn-action text-warning" onclick="mergeBatches()" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; width: auto;">Rapikan/Gabungkan Batch</button>
                     </div>
+                    <div id="editBatchListContainer" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 280px; overflow-y: auto; padding-right: 0.5rem;">
+                        <!-- Daftar batch akan diisi dari JavaScript -->
+                    </div>
+                </div>
+
+                <div class="form-group full-width action-buttons" style="flex-direction: row; margin-top: 1.5rem;">
+                    <button type="submit" class="btn-submit" style="flex: 1;">Simpan Perubahan</button>
+                    <button type="button" class="btn-submit" onclick="closeEditModal()" style="flex: 1; color: var(--text-muted);">Batal</button>
                 </div>
             </form>
         </div>
