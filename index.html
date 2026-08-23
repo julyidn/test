@@ -6,6 +6,10 @@
     <title>Sistem Manajemen Stok Bahan</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Flatpickr CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<!-- Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -199,7 +203,6 @@
 
     <!-- MODAL EDIT INFO -->
     <div class="modal-overlay" id="editModal">
-        <!-- Diperlebar agar input batch terlihat rapi -->
         <div class="modal-card" style="max-width: 600px;">
             <h2>Edit Info & Stok Bahan</h2>
             <form id="formEditStok">
@@ -339,7 +342,7 @@
                 <div class="form-grid">
                     <div class="form-group full-width">
                         <label>Sumber Stok</label>
-                        <select id="issueSource" required onchange="updateIssueLabel()">
+                        <select id="issueSource" required onchange="updateIssueLabel(); syncCustomSelects();">
                             <option value="eceran">Stok Eceran / Luar Kardus</option>
                             <option value="batch">Stok Kardus (Batch Utama - FIFO)</option>
                         </select>
@@ -371,7 +374,7 @@
 
     <!-- MODAL RIWAYAT -->
     <div class="modal-overlay" id="historyModal">
-        <div class="modal-card">
+        <div class="modal-card" style="max-width: 600px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
                 <h2 style="margin-bottom: 0;">Riwayat Transaksi</h2>
                 <button type="button" class="btn-action text-danger" onclick="hapusSemuaRiwayat()" style="display: flex; align-items: center; gap: 0.5rem;" title="Hapus Semua Riwayat">🗑️ Hapus Semua</button>
@@ -424,7 +427,7 @@
         <div class="modal-card" style="text-align: center; max-width: 350px;">
             <h2 id="qrTitle">QR Bahan Baku</h2>
             <p style="font-size: 0.85rem; margin-bottom: 1.5rem; color: var(--text-muted);">Siapkan stiker di printer, lalu tekan tombol cetak.</p>
-            <div id="qrcode-container"></div>
+            <div id="qrcode-container" style="display:flex; justify-content:center; align-items:center;"></div>
             <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
                 <button type="button" class="btn-submit" onclick="printQRLabel()" style="flex: 2; color: var(--primary-color);">Cetak Stiker</button>
                 <button type="button" class="btn-submit" onclick="closeQRModal()" style="flex: 1; color: var(--text-muted);">Tutup</button>
@@ -435,7 +438,7 @@
     <div class="modal-overlay" id="scannerModal">
         <div class="modal-card" style="max-width: 420px; text-align: center;">
             <h2>Scan QR Barang</h2>
-            <div id="reader" style="width: 100%; min-height: 250px; overflow: hidden; margin-bottom: 1.5rem;"></div>
+            <div id="reader" style="width: 100%; min-height: 250px; overflow: hidden; margin-bottom: 1.5rem; border-radius: var(--border-radius-md);"></div>
             <button type="button" class="btn-submit" onclick="closeScannerModal()" style="width: 100%; color: var(--text-muted);">Tutup Scanner</button>
         </div>
     </div>
