@@ -26,101 +26,6 @@ document.getElementById('btnConfirmYes').addEventListener('click', () => {
     closeConfirmModal();
 });
 
-// --- CUSTOM SELECT LOGIC (Dropdown Menarik) ---
-function setupCustomSelects() {
-    const selects = document.querySelectorAll('select');
-    selects.forEach(select => {
-        if(select.classList.contains('custom-select-hidden')) return; 
-        
-        const wrapper = document.createElement('div');
-        wrapper.className = 'custom-select-wrapper';
-        
-        select.parentNode.insertBefore(wrapper, select);
-        select.classList.add('custom-select-hidden');
-        wrapper.appendChild(select);
-        
-        const trigger = document.createElement('div');
-        trigger.className = 'custom-select-trigger';
-        
-        const triggerText = document.createElement('span');
-        triggerText.textContent = select.options[select.selectedIndex]?.text || 'Pilih...';
-        trigger.appendChild(triggerText);
-        
-        const arrow = document.createElement('div');
-        arrow.className = 'custom-select-arrow';
-        arrow.innerHTML = '▼';
-        trigger.appendChild(arrow);
-        
-        wrapper.appendChild(trigger);
-        
-        const optionsContainer = document.createElement('div');
-        optionsContainer.className = 'custom-options';
-        
-        Array.from(select.options).forEach((option, index) => {
-            if (option.disabled && option.value === "") return; 
-            const customOption = document.createElement('div');
-            customOption.className = 'custom-option';
-            if (option.selected) customOption.classList.add('selected');
-            customOption.textContent = option.text;
-            customOption.dataset.value = option.value;
-            
-            customOption.addEventListener('click', function(e) {
-                e.stopPropagation();
-                select.selectedIndex = index;
-                triggerText.textContent = this.textContent;
-                optionsContainer.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
-                this.classList.add('selected');
-                wrapper.classList.remove('open');
-                
-                const event = new Event('change');
-                select.dispatchEvent(event);
-            });
-            optionsContainer.appendChild(customOption);
-        });
-        
-        wrapper.appendChild(optionsContainer);
-        
-        trigger.addEventListener('click', function(e) {
-            e.stopPropagation();
-            document.querySelectorAll('.custom-select-wrapper').forEach(w => {
-                if (w !== wrapper) w.classList.remove('open');
-            });
-            wrapper.classList.toggle('open');
-        });
-    });
-    
-    document.addEventListener('click', function() {
-        document.querySelectorAll('.custom-select-wrapper').forEach(w => w.classList.remove('open'));
-    });
-}
-
-function syncCustomSelects() {
-    document.querySelectorAll('.custom-select-wrapper').forEach(wrapper => {
-        const select = wrapper.querySelector('select');
-        const triggerText = wrapper.querySelector('.custom-select-trigger span');
-        if (select && triggerText) {
-            triggerText.textContent = select.options[select.selectedIndex]?.text || 'Pilih...';
-            wrapper.querySelectorAll('.custom-option').forEach(opt => {
-                opt.classList.remove('selected');
-                if (opt.dataset.value === select.value) {
-                    opt.classList.add('selected');
-                }
-            });
-        }
-    });
-}
-
-function updateCustomSelect(selectId) {
-    const select = document.getElementById(selectId);
-    if(!select) return;
-    const wrapper = select.closest('.custom-select-wrapper');
-    if(wrapper) {
-        wrapper.replaceWith(select);
-        select.classList.remove('custom-select-hidden');
-    }
-    setupCustomSelects();
-}
-
 // 1. Elemen DOM Utama
 const formInputStok = document.getElementById('formInputStok');
 const stockContainer = document.getElementById('stockContainer');
@@ -172,6 +77,7 @@ window.toggleEceran = function() {
     document.getElementById('lblMinStock').innerText = hasEceran ? 'Stok Minimum (Dalam Satuan Eceran)' : `Stok Minimum (Dalam ${satuanUtama})`;
 };
 
+// DIPERBARUI: Menampilkan hide/show edit Stok Eceran
 window.toggleEditEceran = function() {
     const hasEceran = document.getElementById('editHasEceran').checked;
     document.getElementById('editContainerSatuanKecil').style.display = hasEceran ? 'flex' : 'none';
@@ -213,6 +119,7 @@ function getTotalInEceran(item) {
     return item.hasEceran ? (totalBatchQty * (item.isiPerKardus || 1)) + (item.stokEceran || 0) : totalBatchQty; 
 }
 
+// 3. Kalkulasi Dashboard 
 function updateDashboard() {
     const today = new Date(); today.setHours(0,0,0,0);
     let countAman = 0; let countMenipis = 0; let countKosong = 0; let countKadaluwarsa = 0;
@@ -243,6 +150,7 @@ function updateDashboard() {
     statExp.innerText = countKadaluwarsa;
 }
 
+// 4. Render & Filter Tampilan
 function renderStockData() {
     stockContainer.innerHTML = ''; updateDashboard(); 
 
@@ -370,7 +278,6 @@ window.openMoveEceranModal = function(id) {
     };
 
     formMoveEceran.reset();
-    syncCustomSelects();
     moveEceranModal.classList.add('show');
 }
 window.closeMoveEceranModal = function() { moveEceranModal.classList.remove('show'); }
@@ -450,9 +357,6 @@ window.openIssueModal = function(id, specificBatchId = null) {
     }
 
     if(specificBatchId || !item.hasEceran) document.getElementById('issueSource').value = 'batch';
-    
-    updateCustomSelect('issueSource');
-    syncCustomSelects();
     updateIssueLabel();
     
     issueModal.classList.add('show');
@@ -559,8 +463,6 @@ window.openOpnameModal = function(id) {
             document.getElementById('opnameExpDate').required = false;
         }
     };
-    formOpname.reset();
-    syncCustomSelects();
     opnameModal.classList.add('show');
 }
 window.closeOpnameModal = function() { opnameModal.classList.remove('show'); }
@@ -621,7 +523,7 @@ window.openAddBatchModal = function(id) {
     const item = daftarStok.find(i=>i.id===id);
     document.getElementById('addBatchId').value = id; 
     document.getElementById('addBatchLabel').innerText = `Kuantitas Masuk (dalam ${item.satuanBesar})`;
-    formAddBatch.reset(); syncCustomSelects(); addBatchModal.classList.add('show'); 
+    formAddBatch.reset(); addBatchModal.classList.add('show'); 
 }
 window.closeAddBatchModal = function() { addBatchModal.classList.remove('show'); }
 
@@ -658,9 +560,10 @@ formInputStok.addEventListener('submit', function (event) {
         });
         showToast('Data bahan baru berhasil ditambahkan!', 'success');
     }
-    saveDataToStorage(); renderStockData(); formInputStok.reset(); toggleEceran(); syncCustomSelects();
+    saveDataToStorage(); renderStockData(); formInputStok.reset(); toggleEceran();
 });
 
+// DIPERBARUI: Edit & Hapus (Termasuk Batch & Eceran Dinamis)
 window.openEditModal = function(id) { 
     const item = daftarStok.find(i => i.id === id); 
     if (item) { 
@@ -672,20 +575,20 @@ window.openEditModal = function(id) {
         document.getElementById('editSatuanBesar').value = item.satuanBesar; 
         document.getElementById('editSatuanKecil').value = item.hasEceran ? item.satuanKecil : ''; 
         document.getElementById('editIsiPerKardus').value = item.hasEceran ? (item.isiPerKardus || 1) : ''; 
-        document.getElementById('editStokEceran').value = item.stokEceran || 0; 
+        document.getElementById('editStokEceran').value = item.stokEceran || 0; // Populate Eceran
         
         document.getElementById('editMinStock').value = item.minStock || 0; 
         document.getElementById('editLokasiGudang').value = item.lokasiGudang; 
         
         toggleEditEceran();
-        renderEditBatches(item); 
+        renderEditBatches(item); // Render Batch Inputs Dinamis
 
-        syncCustomSelects();
         editModal.classList.add('show'); 
     } 
 }
 window.closeEditModal = function() { editModal.classList.remove('show'); }
 
+// FUNGSI BARU: Generate input dinamis untuk Batch
 function renderEditBatches(item) {
     const container = document.getElementById('editBatchListContainer');
     container.innerHTML = '';
@@ -710,6 +613,7 @@ function renderEditBatches(item) {
     }
 }
 
+// FUNGSI BARU: Gabung Batch Otomatis
 window.mergeBatches = function() {
     const id = parseInt(document.getElementById('editId').value); 
     const item = daftarStok.find(i => i.id === id);
@@ -721,6 +625,7 @@ window.mergeBatches = function() {
     let isMerged = false;
     let mergedBatches = [];
 
+    // Cari dan gabungkan berdasarkan Expired Date yang sama
     item.batches.forEach(b => {
         let existing = mergedBatches.find(mb => mb.expDate === b.expDate);
         if (existing) {
@@ -736,13 +641,14 @@ window.mergeBatches = function() {
         catatRiwayat(item.namaBahan, 'Sistem', 0, getSisaText(item), item.satuanBesar, 'Merge Batch', 'Penggabungan batch dengan Expired Date yang identik');
         saveDataToStorage();
         renderStockData();
-        renderEditBatches(item); 
+        renderEditBatches(item); // Refresh UI dinamis
         showToast("Batch berhasil dirapikan & digabung!", "success");
     } else {
         showToast("Tidak ada batch dengan Expired Date yang sama.", "warning");
     }
 }
 
+// DIPERBARUI: Simpan Editan (Termasuk Eceran & Looping Batch)
 formEditStok.addEventListener('submit', function(e) { 
     e.preventDefault(); 
     const id = parseInt(document.getElementById('editId').value); const item = daftarStok.find(i => i.id === id); 
@@ -755,6 +661,7 @@ formEditStok.addEventListener('submit', function(e) {
         item.hasEceran = hasEceran; 
         item.satuanBesar = satuanBesar;
         
+        // Logika Update Eceran
         if (hasEceran) { 
             item.satuanKecil = document.getElementById('editSatuanKecil').value; 
             item.isiPerKardus = parseFloat(document.getElementById('editIsiPerKardus').value); 
@@ -774,6 +681,7 @@ formEditStok.addEventListener('submit', function(e) {
         item.minStock = parseFloat(document.getElementById('editMinStock').value); 
         item.lokasiGudang = document.getElementById('editLokasiGudang').value; 
 
+        // Logika Looping & Update Batch
         const batchRows = document.querySelectorAll('#editBatchListContainer .batch-edit-row');
         let updatedBatches = [];
         
@@ -788,6 +696,7 @@ formEditStok.addEventListener('submit', function(e) {
                 const diffBatch = newQty - oldBatch.kuantitas;
                 const expChanged = oldBatch.expDate !== newExp;
                 
+                // Set data baru sementara agar perhitungan sisaText log akurat
                 oldBatch.kuantitas = newQty; 
                 oldBatch.expDate = newExp;
                 
@@ -796,7 +705,7 @@ formEditStok.addEventListener('submit', function(e) {
                     catatRiwayat(item.namaBahan, jenis, Math.abs(diffBatch), getSisaText(item), item.satuanBesar, 'Revisi Manual', `Koreksi Kuantitas Batch (Exp: ${newExp})`);
                 }
                 
-                if (expChanged && diffBatch === 0) { 
+                if (expChanged && diffBatch === 0) { // Catat perubahan Exp jika tidak disertai perubahan Qty
                     catatRiwayat(item.namaBahan, 'Sistem', 0, getSisaText(item), item.satuanBesar, 'Revisi Manual', `Ubah Expired Date menjadi ${newExp}`);
                 }
                 
@@ -804,7 +713,7 @@ formEditStok.addEventListener('submit', function(e) {
             }
         });
         
-        item.batches = updatedBatches; 
+        item.batches = updatedBatches; // Filter menghapus batch yang Qty-nya dijadikan 0 (habis)
 
         saveDataToStorage(); renderStockData(); closeEditModal(); showToast('Informasi, Stok, dan Batch berhasil diperbarui.', 'success');
     } 
@@ -857,6 +766,7 @@ window.hapusSemuaRiwayat = function() {
     showConfirm('Peringatan: Anda akan menghapus SEMUA riwayat transaksi. Tindakan ini tidak dapat dibatalkan. Lanjutkan?', () => { riwayatStok = []; saveHistoryToStorage(); openHistoryModal(); showToast('Seluruh riwayat berhasil dihapus.', 'success'); });
 }
 
+// 9. LOGIKA EKSPOR LAPORAN EXCEL & JSON (Status Terupdate)
 window.exportExcel = async function() {
     if (typeof ExcelJS === 'undefined') { showToast("Library ExcelJS belum dimuat.", "danger"); return; }
     
@@ -902,7 +812,7 @@ window.exportExcel = async function() {
         let totalBatch = item.batches.reduce((sum, b) => sum + b.kuantitas, 0);
         let eceranEquivalent = getTotalInEceran(item);
         
-        let batchInfo = item.batches.sort((a,b) => new Date(a.expDate) - new Date(b.expDate)).map(b => `${b.kuantitas} (Exp: ${b.expDate})`).join(' \\n');
+        let batchInfo = item.batches.sort((a,b) => new Date(a.expDate) - new Date(b.expDate)).map(b => `${b.kuantitas} (Exp: ${b.expDate})`).join(' \n');
 
         let isHampirExp = false; let isExp = false;
         item.batches.forEach(b => {
@@ -912,6 +822,7 @@ window.exportExcel = async function() {
             else if (daysDiff <= 7) isHampirExp = true;
         });
 
+        // STATUS LOGIC UNTUK EXCEL
         let statusArr = [];
         if (eceranEquivalent <= 0) {
             statusArr.push("KOSONG");
@@ -987,6 +898,7 @@ window.importJSON = function(event) {
     reader.readAsText(file); event.target.value = '';
 };
 
+// --- QR GENERATOR DAN SCANNER ---
 window.showQRCode = function(idBahan, namaBahan) {
     const qrContainer = document.getElementById('qrcode-container');
     qrContainer.innerHTML = ''; 
@@ -1015,7 +927,7 @@ window.printQRLabel = function() {
         <body style="text-align:center; padding-top: 30px; font-family: sans-serif;">
             <img src="${imgSrc}" style="width:160px; height:160px; margin-bottom: 10px;" />
             <h4 style="margin:0; padding:0; color:#2d3748;">${document.getElementById('qrTitle').innerText}</h4>
-            <script>window.onload = function() { setTimeout(function() { window.print(); window.close(); }, 300); }<\\/script>
+            <script>window.onload = function() { setTimeout(function() { window.print(); window.close(); }, 300); }<\/script>
         </body></html>
     `);
     printWindow.document.close();
@@ -1082,16 +994,15 @@ searchInput.addEventListener('input', renderStockData);
 tabButtons.forEach(button => { button.addEventListener('click', () => { tabButtons.forEach(btn => btn.classList.remove('active')); button.classList.add('active'); currentFilter = button.getAttribute('data-filter'); renderStockData(); }); });
 dashCards.forEach(card => { card.addEventListener('click', () => { dashCards.forEach(c => c.classList.remove('active')); card.classList.add('active'); currentAlertFilter = card.getAttribute('data-alert'); renderStockData(); }); });
 
+// --- 10. SCROLL TO TOP LOGIC ---
 const scrollTopBtn = document.getElementById("scrollTopBtn");
 window.addEventListener("scroll", function() { if (window.scrollY > 300) { scrollTopBtn.classList.add("show"); } else { scrollTopBtn.classList.remove("show"); } });
 window.scrollToTop = function() { window.scrollTo({ top: 0, behavior: 'smooth' }); };
 
+// --- 11. DARK MODE LOGIC ---
 document.addEventListener('DOMContentLoaded', () => {
     renderStockData();
     toggleEceran();
-    
-    // Inisialisasi Custom Select / Dropdown
-    setupCustomSelects();
 
     const darkModeToggle = document.getElementById('darkModeToggle');
     if (darkModeToggle) {
@@ -1106,29 +1017,4 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('mbg_theme', theme);
         });
     }
-});
-
-// datepicker-module.js
-const initPremiumDatePicker = () => {
-    const dateInputs = document.querySelectorAll('.custom-datepicker');
-    
-    if (dateInputs.length > 0) {
-        flatpickr(dateInputs, {
-            dateFormat: "Y-m-d",
-            altInput: true,
-            altFormat: "d F Y", // Contoh: 23 August 2026
-            disableMobile: true,
-            onOpen: function(selectedDates, dateStr, instance) {
-                // Menambahkan class untuk memicu animasi pop-up
-                instance.calendarContainer.classList.add('neumorphic-open');
-            },
-            onClose: function(selectedDates, dateStr, instance) {
-                instance.calendarContainer.classList.remove('neumorphic-open');
-            }
-        });
-    }
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-    initPremiumDatePicker();
 });
